@@ -415,16 +415,18 @@ def initialize_llm_and_embeddings_v2():
         else:
             raise e
     
-    # Initialize evaluator LLM (GPT-3.5 Turbo), max tokes set to 10 to minimize the cost
+    # Initialize evaluator LLM (GPT-3.5 Turbo), max tokes set  to minimize the cost
     # we only need a simple result like 0.35 
+    # this model could be changed to llama or some other open llm 
+    # as this task is relatively simple and finetuning could be used for optimization
 
     llm_evaluator = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.5,
         max_tokens=200,
         timeout=10,
-        frequency_penalty=0.5,  # ✅ Reduce repetitive patterns
-        presence_penalty=0.5
+        frequency_penalty=2.0,  # ✅ Reduce repetitive patterns
+        presence_penalty=2.0
     )
 
     

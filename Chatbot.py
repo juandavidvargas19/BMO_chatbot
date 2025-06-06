@@ -95,8 +95,9 @@ enhanced_retriever_tool = Metrics.enhanced_retriever_tool
 
 #estimations to normalize satisfaction per dollar and quality per dollar to be in the range 0.00 to 1.00
 estimated_min_cost, _, _= calculate_cost( 50 , 150 )
-max_satisfaction_per_dollar = 5.0 / estimated_min_cost
+max_satisfaction_per_dollar = 5.0what is reinforcement learning? / estimated_min_cost
 max_quality_per_dollar = 1.0 / estimated_min_cost
+price_per_kwh = 0.192 #average canada, reference: https://www.energyhub.org/electricity-prices/
 
 # Test metrics on startup
 print("🧪 Testing metrics initialization...")
@@ -158,6 +159,7 @@ def main():
         sl.session_state.total_carbon = 0
         sl.session_state.total_satisfaction = 0
         sl.session_state.satisfaction_scores = []
+        sl.session_state.satisfaction_score = 0
         sl.session_state.awaiting_score = False
         sl.session_state.current_metrics = None
         sl.session_state.score_submitted = False
@@ -213,6 +215,7 @@ def main():
         input_tokens = count_tokens(query)
         output_tokens = count_tokens(response)
         total_cost, input_cost, output_cost = calculate_cost(input_tokens, output_tokens)
+        total_cost = total_cost + ( emissions_data*price_per_kwh )
         
         # Context adherence metrics
         word_adherence = calculate_context_adherence(response, raw_retrieved_docs)
@@ -234,7 +237,6 @@ def main():
             'total_cost': total_cost,
             'combined_adherence': combined_adherence,
             'total_latency': total_latency,
-            'carbon_footprint_mg': emissions_data * 1000000,
             'retrieval_time': retrieval_time,
             'llm_time': llm_time,
             'llm_evaluator_score':evaluation_score
@@ -279,6 +281,7 @@ def main():
                     # Mark score as submitted to prevent reprocessing
                     sl.session_state.score_submitted = True
                     
+                    sl.session_state.satisfaction_score = satisfaction_score
                     log_metrics_to_prometheus(sl.session_state.current_metrics, satisfaction_score)
 
                     save_training_data(
@@ -359,19 +362,19 @@ def main():
 
         # Prepare session data for Prometheus
         session_data = {
-            'avg_tokens_per_query': avg_tokens,
-            'avg_context_adherence': avg_adherence,
-            'avg_latency': avg_latency,
-            'avg_carbon_per_query': avg_carbon * 1000000,  # Convert to mg
-            'avg_user_satisfaction': avg_satisfaction,
-            'avg_cost_per_query': avg_cost,
-            'avg_llm_evaluator_score': avg_llm_evaluator_score,
-            'avg_energy_per_query': avg_energy,
-            'satisfaction_per_dollar': efficiency_score,
-            'quality_per_dollar': quality_efficiency,
-            'excellent_answers_pct': excellent_pct,
-            'good_answers_pct': good_pct,
-            'poor_answers_pct': poor_pct
+            'tokens_query': sl.session_state.current_metrics['input_tokens'] + sl.session_state.current_metrics['output_tokens'],
+            'carbon_footprint': sl.session_state.current_metrics['emissions_data']*1000000,
+            'energy_per_query': sl.session_state.current_metrics['emissions_data'],
+            'latency_query': sl.session_state.current_metrics['total_latency'],
+
+            'context_adherence_query': sl.session_state.current_metrics['combined_adherence'], 
+            'user_satisfaction': sl.session_state.satisfaction_score,
+            'cost_per_query': sl.session_state.current_metrics['total_cost'],
+
+            'satisfaction_per_dollar': (sl.session_state.satisfaction_scores[-1]/ sl.session_state.current_metrics['total_cost'])/ max_satisfaction_per_dollar,
+            'quality_per_dollar': (sl.session_state.current_metrics['combined_adherence']/ sl.session_state.current_metrics['total_cost'])/ max_quality_per_dollar,
+            'llm_score': sl.session_state.current_metrics['llm_evaluator_score'],
+            
         }
         
         # Send session metrics to Prometheus

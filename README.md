@@ -1,50 +1,82 @@
-# MAPS: A Metacognitive Architecture for Improved Social Learning
+# BMO Chatbot: RAG-Enhanced AI Assistant
 
-This repository contains the implementation of MAPS (Metacognitive Architecture for Improved Social Learning) as described in our paper published in the Proceedings of the International Workshop on Advancing AI Through Theory of Mind, 2025. 
-[TOM4AI Workshop proceedings](https://arxiv.org/abs/2505.03770)
-[Full length paper - preprint](pdf/MAPS_TMLR_Journal_Submission.pdf)
+This repository contains a prototype for a production-ready chatbot implementation with RAG (Retrieval-Augmented Generation) capabilities. The chatbot leverages advanced AI techniques for enhanced conversational experiences and includes comprehensive deployment, monitoring, and optimization features.
 
+![](material/image_chatbot.png)
 
-## Authors
-- Juan David Vargas (Université de Montréal, MILA - Quebec AI Institute, CHU Sainte-Justine)
-- Natalie Kastel (CHU Sainte-Justine, MILA - Quebec AI Institute, Université de Montréal)
-- Antoine Pasquali (Université libre de Bruxelles)
-- Axel Cleeremans (CrossLabs)
-- Zahra Sheikhbahaee* (CHU Sainte-Justine, MILA - Quebec AI Institute)
-- Guillaume Dumas* (CHU Sainte-Justine, MILA - Quebec AI Institute, Université de Montréal)
-
-*Co-Senior Authors
+## Author
+- Juan David Vargas Mazuera (Université de Montréal, MILA - Quebec AI Institute, CHU Sainte-Justine Research Center)
 
 ## Overview
 
-MAPS is a novel architecture that combines metacognitive components with advanced learning techniques. The key components include:
+The Chatbot combines state-of-the-art language models with agentic retrieval-augmented generation to provide accurate, contextual responses. The system is designed for production deployment with enterprise-grade monitoring and performance optimization capabilities. 
 
-1. A secondary network (2nd-Net) with a comparator matrix connected to wagering units
-2. A cascade model facilitating graded accumulation of activation
+### Key Features
 
-Our experiments demonstrate significant performance improvements across multiple domains including Blindsight, Artificial Grammar Learning (AGL), Single-Agent Reinforcement Learning (SARL), and Multi-Agent Reinforcement Learning (MARL). We test our architecture over 6 settings, alternating with these 2 components on and off. 
-
-   ![](images/RLC_Figures.png)
-
-
-## Methodology
-
-- **Primary Network**: Main neural network with contrastive loss
-- **Secondary Network**: Comparator matrix connected to two wagering units
-- **Cascade Model**: Facilitates graded accumulation of activation (typically 50 iterations)
-- **SARL Implementation**: DQN framework with convolutional layers, autoencoder, and replay buffer
-- **MARL Implementation**: MAPPO framework with convolutional layers, sinusoidal-based relative positional encoding, and Gated Recurrent Unit (GRU)
-
-## Installation
+- **RAG Architecture**: Langgraph implementation of agentic retrieval-augmented generation  
+- **Containerized Deployment**: Docker and Kubernetes support for scalable deployment
+- **Comprehensive Monitoring**: Prometheus and Grafana integration for real-time metrics
+- **Cache memory usage**: Usage of cache memory prevents repeated expensive operations that would otherwise happen on every streamlit rerun
+- **Performance Optimized**: Base code provided for finetuning using reinforcement learning from human feedback
+- **LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
+- **Context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions
 
 
+## Quick Start
 
-Prometeus and Grafana: 
+### Prerequisites
+
+- Docker 
+- Kubernetes cluster (Minikube for local development)
+- Helm 3.x
+
+### Basic Installation
+
+
+Docker [follow installation steps](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fhomebrew#Service)
+
+for Linux
+```bash
+#Set up Docker's apt repository.
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+# Add the repository to Apt sources:
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \ sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+# Install the Docker packages.
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# Verify that the installation is successful by running the hello-world image:
+sudo usermod -aG docker $USER
+newgrp docker
+sudo docker run hello-world
+```
+
+
+Minikube [follow installation steps](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fhomebrew#Service)
+
+for Linux
+```bash
+curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
+minikube start
+```
+
+
+Helm, Prometheus, and Grafana [follow installation steps](https://blog.marcnuri.com/prometheus-grafana-setup-minikube)
+
+
+For Linux
 ```bash
 #install helm, this is pre requiesite for both prometheus and grafana
-
 sudo snap install helm --classic
+```
 
+```bash
 #installation steps for prometheus
 # read more in https://blog.marcnuri.com/prometheus-grafana-setup-minikube
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -53,110 +85,71 @@ kubectl expose service prometheus-server --type=NodePort --target-port=9090 --na
 kubectl get pods -l app.kubernetes.io/instance=prometheus # (optional) check whether everything has been deployed
 minikube service prometheus-server-np # to open prometheus web interface
 
+```
 
+```bash
 #installation steps for grafana
 helm repo add grafana https://grafana.github.io/helm-charts
 helm install grafana grafana/grafana
 kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-np
 kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo #get grafana admin password
+```
+
+Follow the instructions in the command, save the credentials, and enter Grafana's interface using the key from the previous step:
+
+```bash
 minikube service grafana-np #load grafana web interface using credentials
 # user = admin
 # password = output from previous command
 ```
 
-Additionall requirements for SARL:
+### Deployment
+
+
+# Clone the repository
 
 ```bash
-cd SARL/MinAtar
-pip install .
+git clone https://github.com/juandavidvargas19/BMO_chatbot.git -b Production
 ```
 
-Additionall requirements for MARL:
+# Set-up open-ai keys 
+
+Go to your open-ai account and copy your open-ai key. Make sure you have balance in your account. [open-ai keys](https://platform.openai.com/api-keys)
+
+Then, execute and following code. Use the output as the opena-ai key in the secrets.yaml file.
 
 ```bash
-cd MARL/MAPPO-ATTENTIOAN
-pip install "ray[cpp]" 
-cd MARL
-git clone -b main https://github.com/deepmind/meltingpot
-cd meltingpot
-pip install --editable .[dev]
+secrets.yaml
 ```
 
+# Run both the set-up script, and the deployment script
 
-## Experiments
-
-This repository includes code for reproducing the experiments described in the paper:
-
-### 1. Blindsight
-
-   ![](images/Perceptual_architecture.png)
-
-
+set-up
 ```bash
-cd BLINDSIGHT
-python Blindsight_TMLR.py
+chmod a+x setup.sh
+./setup.sh
 ```
 
-### 2. Artificial Grammar Learning (AGL)
-
+deployment
 ```bash
-cd AGL
-python AGL_TMLR.py
+chmod a+x deploy.sh
+./deploy.sh
 ```
 
-### 3. Single-Agent Reinforcement Learning (SARL)
+# Open the interface
 
-   ![](images/SARL_architecture.png)
-
-
-The SARL experiments are conducted on MinAtar environments. The experiments recorded on the short version of our paper use "Seaquest" and "Asterix". However, you can run "Breakout", "Space Invaders", "Freeway", "Seaquest" and "Asterix". To run SARL, there are 3 experiments: standard (running a single environment), transfer learning, and continual learning. 
-
-For each of this cases, you need to change the generic variable = $general_dir to $local_repo_directory/SARL/MinAtar. Then for each case you need to run:
-
-Standard run ( environment, seed, setting) 
-```bash
-cd SARL/ 
-./SARL_Training_Standard.sh BREAK 1 1
-```
-You can change BREAK for the corresponding environment. Please see the script in SARL_Training_Standard.sh to change the corresponding flag name for each environment.
+Use the URL address to open the graphical interface of the chatbot. 
+![](material/image_deploy.png)
 
 
-   ![](images/CL_architecture.png)
-
-Transfer learning ( setting, number_steps)
-```bash
-cd SARL_CL/ 
-./SARL_Training_TransferLearning_TernaryPlot.sh 1 100000
-```
-
-Continual learning ( seed, setting)
-```bash
-cd SARL_CL/ 
-./SARL_Training_ContinuousLearning.sh 1 1
-```
-
-### 4. Multi-Agent Reinforcement Learning (MARL)
-
-   ![](images/MARL_architecture.png)
+Rate each answer to proceed
+![](material/image_rate.png)
 
 
-MARL experiments include Harvest Cleaner, Harvest Planter, Chemistry 3D, and Territory Inside Out environments. However there are more than 20 environments compatible that you can try.
+Click the "Ask Another Question" there after.
+![](material/image_ask_another.png)
 
-For each of this cases, you need to change the generic variable = $general_dir to $local_repo_directory/MARL. Then for each case you need to run:
 
-Standard run (with 2nd order network)
-```bash
-cd MARL/
-./meltingpot.sh TERRITORY_I 10 LSTM 100 1 1 META ADAM 101 1 True 0
-```
-
-Standard run (without 2nd order network)
-```bash
-cd MARL/
-./meltingpot.sh TERRITORY_I 10 LSTM 100 1 1 META ADAM 101 1 False 0
-```
-
-You can change TERRITORY_I for the corresponding environment. Please see the script in meltingpot.sh to change the corresponding flag name for each environment.
 
 ## Results Summary
 
@@ -197,16 +190,7 @@ Our results demonstrate significant improvements using the MAPS architecture:
 
 ## Citation
 
-If you use this code in your research, please cite our paper:
-
-```
-@inproceedings{vargas2025maps,
-  title={MAPS - A Metacognitive Architecture for Improved Social Learning},
-  author={Vargas, Juan David and Kastel, Natalie and Pasquali, Antoine and Cleeremans, Axel and Sheikhbahaee, Zahra and Dumas, Guillaume},
-  booktitle={Proceedings of the International Workshop on Advancing AI Through Theory of Mind},
-  year={2025}
-}
-```
+If you want to use this code, please reach out to BMO capital markets.
 
 
 
@@ -215,29 +199,3 @@ If you use this code in your research, please cite our paper:
 
 
 
-
-
-
-#install docker
-https://docs.docker.com/desktop/setup/install/linux/ubuntu/
-
-
-sudo usermod -aG docker $USER
-newgrp docker
-
-
-#install minikube
-https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download#Service
-
-
-
-
-curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
-
-
-
-
----------------GRAFANA AND PROMETEUS
-
-sudo snap install helm --classic

@@ -45,29 +45,27 @@ def get_or_create_metrics():
                 'COST_TOTAL': Counter('pdf_rag_cost_total', 'Total cost incurred in USD'),
                 'CONTEXT_ADHERENCE': Histogram('pdf_rag_context_adherence', 'Context adherence scores',
                                              buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
-                'USER_SATISFACTION': Histogram('pdf_rag_user_satisfaction', 'User satisfaction scores',
-                                             buckets=[0, 1, 2, 3, 4, 5]),
-                'CARBON_FOOTPRINT': Counter('pdf_rag_carbon_emissions_mg', 'Carbon emissions in milligrams CO2eq'),
+
                 'RETRIEVAL_TIME': Histogram('pdf_rag_retrieval_duration_seconds', 'Time spent on document retrieval'),
                 'LLM_TIME': Histogram('pdf_rag_llm_duration_seconds', 'Time spent on LLM inference'),
                 
-                # Session-level average metrics (Gauges)
-                'AVG_TOKENS_PER_QUERY': Gauge('pdf_rag_avg_tokens_per_query', 'Average tokens per query in session'),
-                'AVG_CONTEXT_ADHERENCE': Gauge('pdf_rag_avg_context_adherence', 'Average context adherence in session'),
-                'AVG_LATENCY': Gauge('pdf_rag_avg_latency_seconds', 'Average latency per query in session'),
-                'AVG_CARBON_PER_QUERY': Gauge('pdf_rag_avg_carbon_mg_per_query', 'Average carbon emissions per query in session'),
-                'AVG_USER_SATISFACTION': Gauge('pdf_rag_avg_user_satisfaction', 'Average user satisfaction in session'),
-                'AVG_COST_PER_QUERY': Gauge('pdf_rag_avg_cost_per_query', 'Average cost per query in session'),
-                'AVG_ENERGY_PER_QUERY': Gauge('pdf_rag_avg_energy_kwh_per_query', 'Average energy per query in session'),
+                # Session-level metrics (Gauges)
+
+                'TOKENS_PER_QUERY': Gauge('pdf_rag_tokens_per_query', 'tokens per query'),
+                'CONTEXT_ADHERENCE_PER_QUERY': Gauge('pdf_rag_context_adherence_per_query', 'context adherence per query'),
+
+
+                'CARBON_FOOTPRINT': Gauge('pdf_rag_carbon_mg_per_query', 'carbon emissions per query in session'),
+                'USER_SATISFACTION': Gauge('pdf_rag_user_satisfaction', 'user satisfaction per response'),
+                'COST_PER_QUERY': Gauge('pdf_rag_cost_per_query', 'cost per query in dollars'),
+                'ENERGY_PER_QUERY': Gauge('pdf_rag_energy_kwh_per_query', 'energy per query in kWh'),
+                'LATENCY_PER_QUERY': Gauge('pdf_rag_latency_per_query', 'latency query in seconds'),
                 
                 # Performance analysis metrics (Gauges)
                 'SATISFACTION_PER_DOLLAR': Gauge('pdf_rag_satisfaction_per_dollar', 'User satisfaction per dollar spent'),
                 'QUALITY_PER_DOLLAR': Gauge('pdf_rag_quality_per_dollar', 'Quality (adherence) per dollar spent'),
-                
-                # Session distribution metrics (Gauges)
-                'EXCELLENT_ANSWERS_PCT': Gauge('pdf_rag_excellent_answers_percentage', 'Percentage of excellent answers (4-5 rating)'),
-                'GOOD_ANSWERS_PCT': Gauge('pdf_rag_good_answers_percentage', 'Percentage of good answers (3 rating)'),
-                'POOR_ANSWERS_PCT': Gauge('pdf_rag_poor_answers_percentage', 'Percentage of poor answers (0-2 rating)')
+                'SCORE_LLM_EVALUATOR': Gauge('pdf_rag_llm_evaluator', 'Score from a llm evaluator'),
+
             }
             
             _METRICS_INITIALIZED = True
@@ -245,8 +243,7 @@ class Monitoring:
             metrics = get_or_create_metrics()
             
             # Verify metrics_data has required fields
-            required_fields = ['input_tokens', 'output_tokens', 'total_cost', 'carbon_footprint_mg', 
-                             'total_latency', 'combined_adherence']
+            required_fields = ['input_tokens', 'output_tokens', 'total_cost', 'total_latency', 'combined_adherence']
             missing_fields = [field for field in required_fields if field not in metrics_data]
             if missing_fields:
                 print(f"⚠️ Missing required fields in metrics_data: {missing_fields}")
@@ -257,7 +254,6 @@ class Monitoring:
             metrics['TOKEN_USAGE'].labels(token_type='input').inc(metrics_data['input_tokens'])
             metrics['TOKEN_USAGE'].labels(token_type='output').inc(metrics_data['output_tokens'])
             metrics['COST_TOTAL'].inc(metrics_data['total_cost'])
-            metrics['CARBON_FOOTPRINT'].inc(metrics_data['carbon_footprint_mg'])
             
             # Record histograms
             metrics['QUERY_DURATION'].observe(metrics_data['total_latency'])
@@ -265,8 +261,7 @@ class Monitoring:
             metrics['RETRIEVAL_TIME'].observe(metrics_data.get('retrieval_time', 0))
             metrics['LLM_TIME'].observe(metrics_data.get('llm_time', 0))
             
-            if satisfaction_score is not None:
-                metrics['USER_SATISFACTION'].observe(satisfaction_score)
+          
             
             print(f"📊 Individual metrics logged to Prometheus: {metrics_data['input_tokens']} input tokens, "
                   f"{metrics_data['output_tokens']} output tokens, {metrics_data['total_latency']:.3f}s latency")
@@ -295,32 +290,29 @@ class Monitoring:
             # Update session-level gauge metrics
             metrics_updated = 0
             
-            if 'avg_tokens_per_query' in session_data:
-                metrics['AVG_TOKENS_PER_QUERY'].set(session_data['avg_tokens_per_query'])
+            if 'tokens_query' in session_data:
+                metrics['TOKENS_PER_QUERY'].set(session_data['tokens_query'])
                 metrics_updated += 1
             
-            if 'avg_context_adherence' in session_data:
-                metrics['AVG_CONTEXT_ADHERENCE'].set(session_data['avg_context_adherence'])
+            if 'context_adherence_query' in session_data:
+                metrics['CONTEXT_ADHERENCE_PER_QUERY'].set(session_data['context_adherence_query'])
                 metrics_updated += 1
             
-            if 'avg_latency' in session_data:
-                metrics['AVG_LATENCY'].set(session_data['avg_latency'])
+            
+            if 'carbon_footprint' in session_data:
+                metrics['CARBON_FOOTPRINT'].set(session_data['carbon_footprint'])
                 metrics_updated += 1
             
-            if 'avg_carbon_per_query' in session_data:
-                metrics['AVG_CARBON_PER_QUERY'].set(session_data['avg_carbon_per_query'])
+            if 'user_satisfaction' in session_data:
+                metrics['USER_SATISFACTION'].set(session_data['user_satisfaction'])
                 metrics_updated += 1
             
-            if 'avg_user_satisfaction' in session_data:
-                metrics['AVG_USER_SATISFACTION'].set(session_data['avg_user_satisfaction'])
+            if 'cost_per_query' in session_data:
+                metrics['COST_PER_QUERY'].set(session_data['cost_per_query'])
                 metrics_updated += 1
             
-            if 'avg_cost_per_query' in session_data:
-                metrics['AVG_COST_PER_QUERY'].set(session_data['avg_cost_per_query'])
-                metrics_updated += 1
-            
-            if 'avg_energy_per_query' in session_data:
-                metrics['AVG_ENERGY_PER_QUERY'].set(session_data['avg_energy_per_query'])
+            if 'energy_per_query' in session_data:
+                metrics['ENERGY_PER_QUERY'].set(session_data['energy_per_query'])
                 metrics_updated += 1
             
             # Performance analysis metrics
@@ -331,20 +323,15 @@ class Monitoring:
             if 'quality_per_dollar' in session_data:
                 metrics['QUALITY_PER_DOLLAR'].set(session_data['quality_per_dollar'])
                 metrics_updated += 1
-            
-            # Distribution metrics
-            if 'excellent_answers_pct' in session_data:
-                metrics['EXCELLENT_ANSWERS_PCT'].set(session_data['excellent_answers_pct'])
+
+            if 'llm_score' in session_data:
+                metrics['SCORE_LLM_EVALUATOR'].set(session_data['llm_score'])
                 metrics_updated += 1
             
-            if 'good_answers_pct' in session_data:
-                metrics['GOOD_ANSWERS_PCT'].set(session_data['good_answers_pct'])
+            if 'latency_query' in session_data:
+                metrics['LATENCY_PER_QUERY'].set(session_data['latency_query'])
                 metrics_updated += 1
-            
-            if 'poor_answers_pct' in session_data:
-                metrics['POOR_ANSWERS_PCT'].set(session_data['poor_answers_pct'])
-                metrics_updated += 1
-            
+
             print(f"📊 Session metrics logged to Prometheus: {metrics_updated}/{len(session_data)} metrics updated successfully")
             
             # Debug session data
@@ -612,7 +599,6 @@ def test_metrics():
             'input_tokens': 10,
             'output_tokens': 20,
             'total_cost': 0.001,
-            'carbon_footprint_mg': 5.0,
             'total_latency': 1.5,
             'combined_adherence': 0.8,
             'retrieval_time': 0.3,
