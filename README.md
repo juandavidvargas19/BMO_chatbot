@@ -19,7 +19,7 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 - **Cache memory usage**: Usage of cache memory prevents repeated expensive operations that would otherwise happen on every streamlit rerun
 - **Performance Optimized**: Base code provided for finetuning using reinforcement learning from human feedback
 - **LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
-- **Context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions
+- **Context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3)
 
 
 ## Quick Start
@@ -28,14 +28,14 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 
 - Docker 
 - Kubernetes cluster (Minikube for local development)
-- Helm 3.x
+- Helm 
+- Prometheus and Grafana
 
-### Basic Installation
+### Basic Installation (Linux code provided)
 
 
 Docker [follow installation steps](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fhomebrew#Service)
 
-for Linux
 ```bash
 #Set up Docker's apt repository.
 # Add Docker's official GPG key:
@@ -59,7 +59,6 @@ sudo docker run hello-world
 
 Minikube [follow installation steps](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fhomebrew#Service)
 
-for Linux
 ```bash
 curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
@@ -70,7 +69,6 @@ minikube start
 Helm, Prometheus, and Grafana [follow installation steps](https://blog.marcnuri.com/prometheus-grafana-setup-minikube)
 
 
-For Linux
 ```bash
 #install helm, this is pre requiesite for both prometheus and grafana
 sudo snap install helm --classic
@@ -106,23 +104,23 @@ minikube service grafana-np #load grafana web interface using credentials
 ### Deployment
 
 
-# Clone the repository
+#### Clone the repository
 
 ```bash
 git clone https://github.com/juandavidvargas19/BMO_chatbot.git -b Production
 ```
 
-# Set-up open-ai keys 
+#### Set-up open-ai keys 
 
 Go to your open-ai account and copy your open-ai key. Make sure you have balance in your account. [open-ai keys](https://platform.openai.com/api-keys)
 
 Then, execute and following code. Use the output as the opena-ai key in the secrets.yaml file.
 
 ```bash
-secrets.yaml
+echo -n 'sk-your-actual-api-key' | base64
 ```
 
-# Run both the set-up script, and the deployment script
+#### Run both the set-up script, and the deployment script
 
 set-up
 ```bash
@@ -130,13 +128,26 @@ chmod a+x setup.sh
 ./setup.sh
 ```
 
-deployment
+For the deployment, there are 3 versions available that can be deployed depending on the specific needs of the client.
+
+These versions are:
+1. **Base model**: Agentic RAG (Version 1)
+![](material/material/rag_agent_graph_v1.png)
+
+2. **Base model + LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
+![](material/material/rag_agent_graph_v2.png)
+
+3. **Base model + LLM evaluator + context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3)
+
+To deploy each, you need to run the deployment script as in the example:
 ```bash
 chmod a+x deploy.sh
-./deploy.sh
+./deploy.sh 1 #version 1
+# ./deploy.sh 2  #version 2
+# ./deploy.sh 3 #version 3
 ```
 
-# Open the interface
+#### Open the interface
 
 Use the URL address to open the graphical interface of the chatbot. 
 ![](material/image_deploy.png)
@@ -151,41 +162,48 @@ Click the "Ask Another Question" there after.
 
 
 
-## Results Summary
+### Monitoring
 
-Our results demonstrate significant improvements using the MAPS architecture:
+To succesfully set up your monitoring pipeline you need to follow 4 steps:
 
-1. **Blindsight and AGL**: 
-   - Blindsight: 0.97 +/- 0.02 (Z-score: 9.01)
-   - AGL- High Awareness: 0.66 +/- 0.05 (Z-score: 8.20)
-   - AGL- Low Awareness: 0.62 +/- 0.07 (Z-score: 15.70)
+1. Enter the Grafana Graphical interface using the URL address displayed
+![](material/image_deploy.png)
 
+2. Add prometheus as a data source
+![](material/image_data_source.png)
 
-   ![](images/Perceptual_table.png)
-   
-2. **MinAtar SARL**: 
-   - Seaquest: 3.06 +/- 0.34 (Z-score: 7.03)
-   - Asterix: 4.54 +/- 1.01 (Z-score: 1.32)
-   - Breakout: 8.07 +/- 0.72 (Z-score: 3.70)
-   - Space Invaders: 26.80 +/- 1.59 (Z-score: 4.13)
-   - Freeway: 34.20 +/- 2.83 (Z-score: 0.95)
-      
-   ![](images/SARL_table.png)
+3. Import the json file [json file](Monitoring_Template/PDF RAG CHATBOT MONITORING PANEL-1749235089674.json)
+![](material/image_import_dashboard.png)
 
-   ![](images/SARL_results.jpg)
+4. Enjoy
+![](material/image_dashboard.png)
 
-4. **MinAtar SARL + continual/transfer learning**: 
-   - Achieved a mean retention of 45.1% +/- 31.1% for transfer learning. Results for continual learning are still exploratory.
-     ![](images/Ternary_space.png)
+### Optimization
 
-5. **MARL**: 
-   - Commons Harvest Partnership: 34.52 +/- 0.98 (Z-score: 6.20)
-   - Commons Harvest Closed: 25.21 +/- 1.06 (Z-score: 6.31)
-   - Chemistry: 1.11 +/- 0.05 (Z-score: -0.91)
-   - Territory Inside Out: 48.47 +/- 1.45 (Z-score: -1.92)
-      
-     ![](images/MARL_table.png)
-     ![](images/MARL_plot.png)
+To leverage the potential of agentic RAG, we implement a pipeline to finetune the main llm using reinforcement learning from human feedback. 
+
+Our target score is the average of 2 metrics: (normalized user score per dollar, normalized context adherence per dollar). This results in a score in the range [0.00 , 1.00]. In the pipeline, we find a reward model using these metrics, to then finetune our llm. The result is model id which we can change in "Langgraph_Agent.py" file.  The result will look like this:
+
+```bash
+{
+  "model_id": "ft:gpt-4o-2024-08-06:personal::Bew7X3c0",
+  "job_id": "ftjob-d6IPhvlakLgoW9Z0i6czxsTv",
+  "created_at": "2025-06-04T23:04:21.227879",
+  "training_file": "fine_tuning_data_20250604_225715.jsonl",
+  "base_model": "gpt-4o-2024-08-06"
+}
+```
+
+To run this pipeline, you need to collect a big sample of interactions with the chatbot. At every interaction, the necesary inputs will be saved in a "training_data.jsonl" file. We will copy this file to the RLHF directory, and then run the script to finetune our llm.
+
+```bash
+cp training_data.jsonl RLHF
+python RLHF.py
+```
+
+## Production plans
+
+To refer to our full production plans, as well as answers to relevant question about the implementation of this chatbot, please open the plannification file referenced.
 
 
 ## Citation
