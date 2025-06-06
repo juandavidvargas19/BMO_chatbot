@@ -26,6 +26,8 @@ from datetime import datetime
 from IPython.display import display, Image
 from helper_functions import Monitoring, Logging, Metrics, LatencyTracker, init_metrics
 from Langgraph_Agent import initialize_llm_and_embeddings, create_vector_store, load_and_process_pdf, create_rag_agent
+from Langgraph_Agent import initialize_llm_and_embeddings_v2, create_rag_agent_v2
+import argparse
 
 ########################  FUNCTIONS  #######################################
 
@@ -91,6 +93,11 @@ count_tokens = Metrics.count_tokens
 calculate_cost = Metrics.calculate_cost
 enhanced_retriever_tool = Metrics.enhanced_retriever_tool
 
+#estimations to normalize satisfaction per dollar and quality per dollar to be in the range 0.00 to 1.00
+estimated_min_cost, _, _= calculate_cost( 50 , 150 )
+max_satisfaction_per_dollar = 5.0 / estimated_min_cost
+max_quality_per_dollar = 1.0 / estimated_min_cost
+
 # Test metrics on startup
 print("🧪 Testing metrics initialization...")
 try:
@@ -109,17 +116,33 @@ except Exception as e:
 # Call debug function
 Metrics.debug_metrics()
 
-# Initialize all components (cached - only runs once)
-llm, embeddings = initialize_llm_and_embeddings()
 
-# Load PDF and create components (cached - only runs once)
-pdf_path = "random_machine_learing.pdf"
-pages_split = load_and_process_pdf(pdf_path)
-vectorstore = create_vector_store(pages_split, embeddings)
-retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
-rag_agent = create_rag_agent(llm, retriever)
+def main():
 
-if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--architecture_version", "-v", type=int, choices=[1,2])
+
+    args = parser.parse_args()
+    version = args.architecture_version
+
+    # Initialize all components (cached - only runs once)
+    if version == 1:
+        llm, embeddings = initialize_llm_and_embeddings()
+    else:
+        llm, llm_evaluator, embeddings = initialize_llm_and_embeddings_v2()
+
+    # Load PDF and create components (cached - only runs once)
+    pdf_path = "random_machine_learing.pdf"
+    pages_split = load_and_process_pdf(pdf_path)
+    vectorstore = create_vector_store(pages_split, embeddings)
+    retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+
+    if version == 1:
+        rag_agent = create_rag_agent(llm, retriever)
+    else:
+        rag_agent = create_rag_agent_v2(llm, retriever, llm_evaluator)
+        
+
     sl.header("welcome to the 📝PDF bot")
     sl.write("🤖 You can chat by Entering your queries ")
     
@@ -128,6 +151,7 @@ if __name__ == '__main__':
         sl.session_state.total_energy = 0
         sl.session_state.total_queries = 0
         sl.session_state.total_cost = 0
+        sl.session_state.total_llm_evaluator_score = 0
         sl.session_state.total_tokens = 0
         sl.session_state.total_adherence = 0
         sl.session_state.total_latency = 0
@@ -171,9 +195,14 @@ if __name__ == '__main__':
             latency_tracker.log_step("retrieval_complete")
             
             # Step 3: LLM inference
-            messages = [HumanMessage(content=query)]
-            result = rag_agent.invoke({"messages": messages})
+            if version == 1:
+                initial_state = {"messages":  [HumanMessage(content=query)]}                
+            else:
+                initial_state = {'messages': [HumanMessage(content=query)], 'user_query': query ,'evaluation_score': 0.0}
+
+            result = rag_agent.invoke(initial_state)
             response = result['messages'][-1].content
+            evaluation_score = 0.00 if version == 1 else result['evaluation_score']    
             latency_tracker.log_step("llm_complete")
         
         # Stop tracking and get results
@@ -207,7 +236,8 @@ if __name__ == '__main__':
             'total_latency': total_latency,
             'carbon_footprint_mg': emissions_data * 1000000,
             'retrieval_time': retrieval_time,
-            'llm_time': llm_time
+            'llm_time': llm_time,
+            'llm_evaluator_score':evaluation_score
         }
         
         # Log to Prometheus
@@ -264,6 +294,7 @@ if __name__ == '__main__':
                     sl.session_state.total_energy += metrics['emissions_data']
                     sl.session_state.total_queries += 1
                     sl.session_state.total_cost += metrics['total_cost']
+                    sl.session_state.total_llm_evaluator_score += metrics['llm_evaluator_score']
                     sl.session_state.total_tokens += (metrics['input_tokens'] + metrics['output_tokens'])
                     sl.session_state.total_adherence += metrics['combined_adherence']
                     sl.session_state.total_latency += metrics['total_latency']
@@ -302,6 +333,7 @@ if __name__ == '__main__':
         # Calculate averages
         avg_energy = sl.session_state.total_energy / sl.session_state.total_queries
         avg_cost = sl.session_state.total_cost / sl.session_state.total_queries
+        avg_llm_evaluator_score= sl.session_state.total_llm_evaluator_score / sl.session_state.total_queries
         avg_tokens = sl.session_state.total_tokens / sl.session_state.total_queries
         avg_adherence = sl.session_state.total_adherence / sl.session_state.total_queries
         avg_latency = sl.session_state.total_latency / sl.session_state.total_queries
@@ -333,6 +365,7 @@ if __name__ == '__main__':
             'avg_carbon_per_query': avg_carbon * 1000000,  # Convert to mg
             'avg_user_satisfaction': avg_satisfaction,
             'avg_cost_per_query': avg_cost,
+            'avg_llm_evaluator_score': avg_llm_evaluator_score,
             'avg_energy_per_query': avg_energy,
             'satisfaction_per_dollar': efficiency_score,
             'quality_per_dollar': quality_efficiency,
@@ -378,13 +411,16 @@ if __name__ == '__main__':
             sl.metric("Avg Energy per Query", f"{avg_energy:.8f} kWh")
 
         # Performance vs Cost Analysis
-        sl.subheader("Performance vs Cost Analysis")
-        col1, col2 = sl.columns(2)
+        sl.subheader("Performance  Analysis")
+        col1, col2, col3 = sl.columns(3)
         with col1:
-            sl.metric("Satisfaction per Dollar", f"{efficiency_score:.0f}", help="User satisfaction score divided by cost")
+            sl.metric("Satisfaction per Dollar", f"{efficiency_score/max_satisfaction_per_dollar:.2f}", help="User satisfaction score divided by cost")
         with col2:
-            sl.metric("Quality per Dollar", f"{quality_efficiency:.0f}", help="Context adherence divided by cost")
-        
+            sl.metric("Quality per Dollar", f"{quality_efficiency/max_quality_per_dollar:.2f}", help="Context adherence divided by cost")
+        with col3:
+            sl.metric("LLM evaluator score (0.00 - 1.00)", f"{avg_llm_evaluator_score:.2f}")
+
+
         # Satisfaction Distribution
         if len(sl.session_state.satisfaction_scores) > 1:
             sl.subheader("Satisfaction Distribution")
@@ -399,3 +435,5 @@ if __name__ == '__main__':
     # Show instruction when awaiting score (only if not submitted)
     elif sl.session_state.awaiting_score and not sl.session_state.score_submitted:
         sl.info("👆 Please rate the answer above before viewing the metrics.")
+
+main()

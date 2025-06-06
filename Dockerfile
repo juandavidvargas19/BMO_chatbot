@@ -1,4 +1,3 @@
-# Use Python 3.11 slim image
 FROM python:3.10-slim
 
 # Set working directory
@@ -35,9 +34,11 @@ EXPOSE 8501
 # Expose prometheus
 EXPOSE 8080
 
-
 # Health check
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
-# Run Streamlit app
-CMD ["streamlit", "run", "Chatbot.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Set default architecture version (can be overridden)
+ENV ARCHITECTURE_VERSION=2
+
+# Run Streamlit app with version parameter
+CMD ["sh", "-c", "streamlit run Chatbot.py --server.port=8501 --server.address=0.0.0.0 -- -v ${ARCHITECTURE_VERSION}"]

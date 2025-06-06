@@ -6,24 +6,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Parse command line arguments (simple version)
-ARCHITECTURE_VERSION=${1:-2}  # Default to version 2 if no argument provided
-
-# Validate version
-if [[ "$ARCHITECTURE_VERSION" != "1" && "$ARCHITECTURE_VERSION" != "2" ]]; then
-    echo -e "${RED}❌ Invalid architecture version: $ARCHITECTURE_VERSION${NC}"
-    echo -e "${YELLOW}Usage: $0 [1|2]${NC}"
-    echo -e "${YELLOW}  1 - Use architecture version 1${NC}"
-    echo -e "${YELLOW}  2 - Use architecture version 2 (default)${NC}"
-    echo -e "${YELLOW}Examples:${NC}"
-    echo -e "${YELLOW}  $0     # Uses version 2 (default)${NC}"
-    echo -e "${YELLOW}  $0 1   # Uses version 1${NC}"
-    echo -e "${YELLOW}  $0 2   # Uses version 2${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}🚀 Deploying PDF RAG App - Architecture Version $ARCHITECTURE_VERSION${NC}"
-
 # Create logs directory and log file
 mkdir -p logs
 LOG_FILE="logs/deploy_$(date +%Y%m%d_%H%M%S).log"
@@ -31,6 +13,8 @@ LOG_FILE="logs/deploy_$(date +%Y%m%d_%H%M%S).log"
 # Redirect all output to both console and log file
 exec > >(tee -a "$LOG_FILE")
 exec 2>&1
+
+echo -e "${GREEN}🚀 Deploying PDF RAG App (Simple - No ConfigMap)${NC}"
 
 # Check if required commands exist
 command_exists() {
@@ -103,18 +87,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Build Docker image with architecture version
-echo -e "${YELLOW}Building Docker image with embedded PDF and Architecture Version $ARCHITECTURE_VERSION...${NC}"
-DOCKER_BUILDKIT=1 docker build -f Dockerfile \
-    --build-arg ARCHITECTURE_VERSION=$ARCHITECTURE_VERSION \
-    -t pdf-rag-app:latest .
+# Build Docker image (this will include the PDF file)
+echo -e "${YELLOW}Building Docker image with embedded PDF...${NC}"
+docker build -f Dockerfile -t pdf-rag-app:latest .
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Docker build failed${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ Docker image built successfully with Architecture Version $ARCHITECTURE_VERSION${NC}"
+echo -e "${GREEN}✅ Docker image built successfully${NC}"
 
-# Apply deployment (using existing deployment.yaml)
+# Apply deployment (without ConfigMap)
 echo -e "${YELLOW}Applying deployment...${NC}"
 kubectl apply -f deployment.yaml
 if [ $? -ne 0 ]; then
@@ -141,6 +123,7 @@ fi
 
 # Get service URL
 echo -e "${GREEN}✅ Deployment complete!${NC}"
+
 
 # Check all service statuses
 echo -e "${YELLOW}Checking service status:${NC}"
@@ -204,7 +187,6 @@ printf "%-20s %-7s %-10s %-7s %s\n" "grafana" "$GRAFANA_READY_STATUS" "$GRAFANA_
 echo -e "${GREEN}========================================================================${NC}"
 
 # Show quick access commands
-echo -e "${GREEN}🎉 Your services are running with Architecture Version $ARCHITECTURE_VERSION!${NC}"
-echo -e "${YELLOW}Architecture Version: $ARCHITECTURE_VERSION${NC}"
+echo -e "${GREEN}🎉 Your services are running!${NC}"
 
 echo "Log file saved to: $LOG_FILE"
