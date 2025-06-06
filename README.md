@@ -25,6 +25,20 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 
 ## Basic Installation (Linux code provided)
 
+BMO_chatbot/
+├── 📄 chatbot.py              # Main application entry point
+├── 📄 helper_functions.py     # Monitoring, logging, metrics utilities
+├── 📄 Langgraph_Agent.py      # RAG agent implementation
+├── 🔧 setup.sh                # Environment setup script
+├── 🚀 deploy.sh               # Kubernetes deployment script
+├── 📊 monitoring/
+│   ├── deployment.yaml
+│   └── grafana-dashboard.json
+├── 🐳 deployment/
+│   ├── Dockerfile
+│   ├── deployment.yaml
+└── 📋 requirements.txt
+
 ### Prerequisites
 
 - Docker 
