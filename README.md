@@ -26,21 +26,18 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 ## Basic Installation (Linux code provided)
 
 BMO_chatbot/
-├── Core Application Files
-│   ├── 📄 chatbot.py
-│   ├── 📄 helper_functions.py
-│   └── 📄 Langgraph_Agent.py
-├── Deployment & Setup
-│   ├── 🔧 setup.sh
-│   ├── 🚀 deploy.sh                  # Kubernetes deployment script
-│   │   ├── 🐳 Dockerfile             # Container image definition
-│   │   ├── ⚙️ deployment.yaml        # Kubernetes service manifests
-│   │   └── 🔐 secrets.yaml           # Kubernetes secrets configuration
-│   └── 📋 requirements.txt
-└── 📊 monitoring/
-    ├── deployment.yaml
-    └── grafana-dashboard.json
-
+|-- chatbot.py
+|-- helper_functions.py
+|-- Langgraph_Agent.py
+|-- setup.sh
+|-- deploy.sh
+|   |-- Dockerfile
+|   |-- deployment.yaml
+|   `-- secrets.yaml
+|-- requirements.txt
+`-- monitoring/
+    |-- deployment.yaml
+    `-- grafana-dashboard.json
 
 ### Prerequisites
 
