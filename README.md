@@ -22,7 +22,8 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 - **Context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3)
 
 
-## Quick Start
+
+## Basic Installation (Linux code provided)
 
 ### Prerequisites
 
@@ -30,8 +31,6 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 - Kubernetes cluster (Minikube for local development)
 - Helm 
 - Prometheus and Grafana
-
-### Basic Installation (Linux code provided)
 
 
 Docker [follow installation steps](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fhomebrew#Service)
@@ -101,16 +100,16 @@ minikube service grafana-np #load grafana web interface using credentials
 # password = output from previous command
 ```
 
-### Deployment
+## Deployment
 
 
-#### Clone the repository
+### Clone the repository
 
 ```bash
 git clone https://github.com/juandavidvargas19/BMO_chatbot.git -b Production
 ```
 
-#### Set-up open-ai keys 
+### Set-up open-ai keys 
 
 Go to your open-ai account and copy your open-ai key. Make sure you have balance in your account. [open-ai keys](https://platform.openai.com/api-keys)
 
@@ -120,7 +119,7 @@ Then, execute and following code. Use the output as the opena-ai key in the secr
 echo -n 'sk-your-actual-api-key' | base64
 ```
 
-#### Run both the set-up script, and the deployment script
+### Run both the set-up script, and the deployment script
 
 set-up
 ```bash
@@ -147,7 +146,7 @@ chmod a+x deploy.sh
 # ./deploy.sh 3 #version 3
 ```
 
-#### Open the interface
+### Open the interface
 
 Use the URL address to open the graphical interface of the chatbot. 
 ![](material/image_deploy.png)
@@ -162,7 +161,7 @@ Click the "Ask Another Question" there after.
 
 
 
-### Monitoring
+## Monitoring
 
 To succesfully set up your monitoring pipeline you need to follow 4 steps:
 
@@ -178,7 +177,7 @@ To succesfully set up your monitoring pipeline you need to follow 4 steps:
 4. Enjoy
 ![](material/image_dashboard.png)
 
-### Optimization
+## Optimization
 
 To leverage the potential of agentic RAG, we implement a pipeline to finetune the main llm using reinforcement learning from human feedback. 
 
