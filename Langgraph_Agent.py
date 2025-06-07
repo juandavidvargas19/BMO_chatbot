@@ -371,27 +371,35 @@ def create_rag_agent_v3(_llm, _retriever, _llm_evaluator):
     """
     
     evaluation_prompt = """
-    You are a top 1 percent expert evaluator tasked with assessing top notch scientists. 
-    Be critical and demanding in your evaluation as your reputation as a top expert is on the line and you might disappear if this task is not done at your best capability.
-    
+
+    You are a top 1 percent expert evaluator tasked with assesing top notch scientists. 
+    Be critical and demanding in your evaluation     
+    You are a top 1 percent expert evaluator tasked with assesing top notch scientists.
+     Be critical and demanding in your evaluation     
+     as your reputation as a top expert is on the line and you might dissapear if this task is not done at your best capability.
     EVALUATION PROCESS:      
     
     1. EXTRACT MAIN QUESTIONS:     
+    
     First, identify the core questions being asked in the user query (ignore supporting context).      
     
     2. EVALUATE EACH CRITERION (a score in the range of 0.00 to 0.20 each):      
+    
     - Relevance: How well does the response address the user's question?           
+    
     - Accuracy: Is the information provided correct and well-supported?          
+    
     - Completeness: Does the response fully answer the question? Does it include examples?          
-    - Clarity: Is the response clear and well-structured so as to be understood by any professional and it has zero ambiguity?          
-    - Citation: Are there citations? are they of good enough quality? are they relevant to the user's question?
-    - Context Continuity: Does the response appropriately reference and build upon previous conversation context when relevant?
+    - Clarity: Is the response clear and well-structured so as to be understood by a any professional     
+     and it has zero ambiguity?          
+     
+     - Citation: Are there citations? are there of a good enough quality? are they relevant to the user's question?        
      
     3. APPLY STRICT STANDARDS:     
-    - Be highly critical - most responses should score 0.24-0.72 after summing the 6 components.     
-    - Only exceptional responses deserve 0.72+     
-    - 1.0+ answers are 1 in a 100     
-    - Common issues that reduce scores: vague language, missing examples, weak citations, incomplete answers, ignoring conversation context
+    - Be highly critical - most responses should score 0.20-0.60 after summing the 5 components.     
+    - Only exceptional responses deserve 0.60+     
+    - 0.85+ answers are 1 in a 100     
+    - Common issues that reduce scores: vague language, missing examples, weak citations, incomplete answers      
     
     User Query: {user_query}     
     Answer: {ai_response}      
@@ -399,18 +407,24 @@ def create_rag_agent_v3(_llm, _retriever, _llm_evaluator):
     THINK STEP BY STEP:      
     
     Step 1 - Main Questions: [Identify the core questions]      
+    
     Step 2 - Relevance Score: [Evaluate and assign a score in the range 0.00 to 0.20]      
+    
     Step 3 - Accuracy Score: [Evaluate and assign a score in the range 0.00 to 0.20]      
+    
     Step 4 - Completeness Score: [Evaluate and assign a score in the range 0.00 to 0.20]      
+    
     Step 5 - Clarity Score: [Evaluate and assign a score in the range 0.00 to 0.20]      
-    Step 6 - Citations Score: [Evaluate and assign a score in the range 0.00 to 0.20]
-    Step 7 - Context Continuity Score: [Evaluate and assign a score in the range 0.00 to 0.20]
-    Step 8 - Total Score: [Sum all scores = X.XX]
+    
+    Step 6 - Citations Score: [Evaluate and assign a score in the range 0.00 to 0.20]      
+    
+    Step 7 - Total Score: [Sum all scores = X.XX]
 
-    Write the scores for each component with almost no text. Then write the sum of all (X.XX, e.g. 0.68).      
+    Write the scores for each component with almost no text. Then write the sum of all (X.XX, e.g. 0.48).      
 
     IMPORTANT: After your analysis, you MUST end your response with exactly this format, indicating the sum of all criteria:
     <<<SCORE>>>X.XX<<<END>>>
+
     """
     
     tools_dict = {tool.name: tool for tool in tools}
@@ -475,12 +489,13 @@ def create_rag_agent_v3(_llm, _retriever, _llm_evaluator):
                 numbers = re.findall(r'\d+\.?\d*', response_text)
                 evaluation_score = float(numbers[-1]) if numbers else 0.0
             
-            evaluation_score = max(0.0, min(1.2, evaluation_score))  # Allow up to 1.2 for 6 criteria
+            evaluation_score = max(0.0, min(1.0, evaluation_score))
             
         except Exception as e:
             print(f"⚠️ Could not parse score: {e}")
             evaluation_score = 0.0
 
+        
         return {
             'messages': state['messages'],  
             'evaluation_score': evaluation_score

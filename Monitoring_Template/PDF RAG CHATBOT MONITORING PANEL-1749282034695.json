@@ -489,7 +489,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "avg(pdf_rag_satisfaction_per_dollar)",
+          "expr": "avg(pdf_rag_satisfaction_per_dollar <= 2)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -709,7 +709,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "mean"
+            "lastNotNull"
           ],
           "fields": "",
           "values": false
@@ -722,7 +722,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "avg(pdf_rag_quality_per_dollar)",
+          "expr": "avg(pdf_rag_quality_per_dollar<2)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1367,12 +1367,12 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "PDF RAG CHATBOT MONITORING PANEL",
   "uid": "69b2e7e8-76e1-4b3b-be72-883e51524873",
-  "version": 56
+  "version": 61
 }
