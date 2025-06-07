@@ -37,8 +37,11 @@ EXPOSE 8080
 # Health check
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
-# Set default architecture version (can be overridden)
-ENV ARCHITECTURE_VERSION=2
+# Accept build argument
+ARG ARCHITECTURE_VERSION=3
+
+# Set environment variable from build argument
+ENV ARCHITECTURE_VERSION=${ARCHITECTURE_VERSION}
 
 # Run Streamlit app with version parameter
 CMD ["sh", "-c", "streamlit run Chatbot.py --server.port=8501 --server.address=0.0.0.0 -- -v ${ARCHITECTURE_VERSION}"]

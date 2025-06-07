@@ -26,7 +26,7 @@ from datetime import datetime
 from IPython.display import display, Image
 from helper_functions import Monitoring, Logging, Metrics, LatencyTracker, init_metrics
 from Langgraph_Agent import initialize_llm_and_embeddings, create_vector_store, load_and_process_pdf, create_rag_agent
-from Langgraph_Agent import initialize_llm_and_embeddings_v2, create_rag_agent_v2
+from Langgraph_Agent import initialize_llm_and_embeddings_v2, create_rag_agent_v2, create_rag_agent_v3
 import argparse
 
 ########################  FUNCTIONS  #######################################
@@ -94,8 +94,8 @@ calculate_cost = Metrics.calculate_cost
 enhanced_retriever_tool = Metrics.enhanced_retriever_tool
 
 #estimations to normalize satisfaction per dollar and quality per dollar to be in the range 0.00 to 1.00
-estimated_min_cost, _, _= calculate_cost( 50 , 150 )
-max_satisfaction_per_dollar = 5.0what is reinforcement learning? / estimated_min_cost
+estimated_min_cost, _, _= calculate_cost( 30 , 150 ) 
+max_satisfaction_per_dollar = 5.0 / estimated_min_cost
 max_quality_per_dollar = 1.0 / estimated_min_cost
 price_per_kwh = 0.192 #average canada, reference: https://www.energyhub.org/electricity-prices/
 
@@ -121,7 +121,7 @@ Metrics.debug_metrics()
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--architecture_version", "-v", type=int, choices=[1,2])
+    parser.add_argument("--architecture_version", "-v", type=int, choices=[1,2,3])
 
     args = parser.parse_args()
     version = args.architecture_version
@@ -140,12 +140,18 @@ def main():
 
     if version == 1:
         rag_agent = create_rag_agent(llm, retriever)
-    else:
+    elif version == 2:
         rag_agent = create_rag_agent_v2(llm, retriever, llm_evaluator)
-        
+    else:  # version == 3
+        rag_agent = create_rag_agent_v3(llm, retriever, llm_evaluator)
 
     sl.header("welcome to the 📝PDF bot")
-    sl.write("🤖 You can chat by Entering your queries ")
+    version_descriptions = {
+        1: "🤖 Basic RAG Agent",
+        2: "🤖 RAG Agent with LLM Evaluator", 
+        3: "🤖 RAG Agent with LLM Evaluator + Conversation Memory"
+    }
+    sl.write(f"{version_descriptions.get(version, '🤖')} You can chat by entering your queries")
     
     # Initialize session state for tracking
     if 'total_energy' not in sl.session_state:
@@ -164,7 +170,20 @@ def main():
         sl.session_state.current_metrics = None
         sl.session_state.score_submitted = False
     
+    # Initialize conversation memory for version 3 only
+    if version == 3 and 'conversation_memory' not in sl.session_state:
+        sl.session_state.conversation_memory = []  # Store last 3 conversations
+    
     query = sl.text_input('Enter some text')
+    
+    # Display conversation memory for version 3
+    if version == 3 and sl.session_state.get('conversation_memory'):
+        with sl.expander("💭 Conversation Memory (Last 3 exchanges)"):
+            for i, conv in enumerate(reversed(sl.session_state.conversation_memory), 1):
+                sl.write(f"**Exchange {len(sl.session_state.conversation_memory) - i + 1}:**")
+                sl.write(f"*Q: {conv['user_query'][:100]}...*")
+                sl.write(f"*A: {conv['assistant_response'][:200]}...*")
+                sl.write("---")
     
     # Only process new queries when not awaiting score AND query is different from last processed
     if 'last_processed_query' not in sl.session_state:
@@ -198,14 +217,37 @@ def main():
             
             # Step 3: LLM inference
             if version == 1:
-                initial_state = {"messages":  [HumanMessage(content=query)]}                
-            else:
-                initial_state = {'messages': [HumanMessage(content=query)], 'user_query': query ,'evaluation_score': 0.0}
+                initial_state = {"messages": [HumanMessage(content=query)]}                
+            elif version == 2:
+                initial_state = {
+                    'messages': [HumanMessage(content=query)], 
+                    'user_query': query,
+                    'evaluation_score': 0.0
+                }
+            else:  # version == 3
+                initial_state = {
+                    'messages': [HumanMessage(content=query)], 
+                    'user_query': query,
+                    'evaluation_score': 0.0,
+                    'conversation_history': sl.session_state.conversation_memory.copy()
+                }
 
             result = rag_agent.invoke(initial_state)
             response = result['messages'][-1].content
             evaluation_score = 0.00 if version == 1 else result['evaluation_score']    
             latency_tracker.log_step("llm_complete")
+            
+            # Store conversation in memory (version 3 only)
+            if version == 3:
+                current_conversation = {
+                    'user_query': query,
+                    'assistant_response': response
+                }
+                sl.session_state.conversation_memory.append(current_conversation)
+                
+                # Keep only last 3 conversations
+                if len(sl.session_state.conversation_memory) > 3:
+                    sl.session_state.conversation_memory = sl.session_state.conversation_memory[-3:]
         
         # Stop tracking and get results
         emissions_data = tracker.stop()
@@ -239,7 +281,7 @@ def main():
             'total_latency': total_latency,
             'retrieval_time': retrieval_time,
             'llm_time': llm_time,
-            'llm_evaluator_score':evaluation_score
+            'llm_evaluator_score': evaluation_score
         }
         
         # Log to Prometheus

@@ -7,18 +7,12 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Parse command line arguments (simple version)
+
 ARCHITECTURE_VERSION=${1:-2}  # Default to version 2 if no argument provided
 
 # Validate version
-if [[ "$ARCHITECTURE_VERSION" != "1" && "$ARCHITECTURE_VERSION" != "2" ]]; then
+if [[ "$ARCHITECTURE_VERSION" != "1" && "$ARCHITECTURE_VERSION" != "2"  && "$ARCHITECTURE_VERSION" != "3" ]]; then
     echo -e "${RED}❌ Invalid architecture version: $ARCHITECTURE_VERSION${NC}"
-    echo -e "${YELLOW}Usage: $0 [1|2]${NC}"
-    echo -e "${YELLOW}  1 - Use architecture version 1${NC}"
-    echo -e "${YELLOW}  2 - Use architecture version 2 (default)${NC}"
-    echo -e "${YELLOW}Examples:${NC}"
-    echo -e "${YELLOW}  $0     # Uses version 2 (default)${NC}"
-    echo -e "${YELLOW}  $0 1   # Uses version 1${NC}"
-    echo -e "${YELLOW}  $0 2   # Uses version 2${NC}"
     exit 1
 fi
 

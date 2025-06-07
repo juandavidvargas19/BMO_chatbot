@@ -174,7 +174,7 @@ To succesfully set up your monitoring pipeline you need to follow 4 steps:
 2. Add prometheus as a data source
 ![](material/image_data_source.png)
 
-3. Import the json file [json file](Monitoring_Template/PDF RAG CHATBOT MONITORING PANEL-1749235089674.json)
+3. Import the json file [json file](https://github.com/juandavidvargas19/BMO_chatbot/tree/Production/Monitoring_Template)
 ![](material/image_import_dashboard.png)
 
 4. Enjoy
@@ -203,9 +203,9 @@ cp training_data.jsonl RLHF
 python RLHF.py
 ```
 
-## Production plans
+## Report
 
-To refer to our full production plans, as well as answers to relevant question about the implementation of this chatbot, please open the plannification file referenced.
+To refer to our full production plans, as well as answers to relevant question about the implementation of this chatbot, please open the plannification file referenced. [open](https://github.com/juandavidvargas19/BMO_chatbot/tree/Production/material/BMO_RAG_Chatbot_Report.pdf)
 
 
 ## Citation
