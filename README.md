@@ -134,10 +134,14 @@ For the deployment, there are 3 versions available that can be deployed dependin
 
 These versions are:
 1. **Base model**: Agentic RAG (Version 1)
-![](material/material/rag_agent_graph_v1.png)
-
+<p align="center">
+  <img src="material/rag_agent_graph_v1.png">
+</p>
 2. **Base model + LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
-![](material/material/rag_agent_graph_v2.png)
+
+<p align="center">
+  <img src="material/rag_agent_graph_v2.png">
+</p>
 
 3. **Base model + LLM evaluator + context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3)
 
