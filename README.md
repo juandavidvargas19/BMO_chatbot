@@ -2,7 +2,9 @@
 
 This repository contains a prototype for a production-ready chatbot implementation with RAG (Retrieval-Augmented Generation) capabilities. The chatbot leverages advanced AI techniques for enhanced conversational experiences and includes comprehensive deployment, monitoring, and optimization features.
 
-![](material/image_chatbot.png)
+<p align="center">
+  <img src="material/image_chatbot.png">
+</p>
 
 ## Author
 - Juan David Vargas Mazuera (Université de Montréal, MILA - Quebec AI Institute, CHU Sainte-Justine Research Center)
@@ -138,7 +140,6 @@ These versions are:
   <img src="material/rag_agent_graph_v1.png">
 </p>
 2. **Base model + LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
-
 <p align="center">
   <img src="material/rag_agent_graph_v2.png">
 </p>
@@ -156,16 +157,20 @@ chmod a+x deploy.sh
 ### Open the interface
 
 Use the URL address to open the graphical interface of the chatbot. 
-![](material/image_deploy.png)
 
+<p align="center">
+  <img src="material/image_deploy.png">
+</p>
 
 Rate each answer to proceed
-![](material/image_rate.png)
-
+<p align="center">
+  <img src="material/image_rate.png">
+</p>
 
 Click the "Ask Another Question" there after.
-![](material/image_ask_another.png)
-
+<p align="center">
+  <img src="material/image_ask_another.png">
+</p>
 
 
 ## Monitoring
@@ -173,16 +178,24 @@ Click the "Ask Another Question" there after.
 To succesfully set up your monitoring pipeline you need to follow 4 steps:
 
 1. Enter the Grafana Graphical interface using the URL address displayed
-![](material/image_deploy.png)
+<p align="center">
+  <img src="material/image_deploy.png">
+</p>
 
 2. Add prometheus as a data source
-![](material/image_data_source.png)
+<p align="center">
+  <img src="material/image_data_source.png">
+</p>
 
 3. Import the json file [json file](https://github.com/juandavidvargas19/BMO_chatbot/tree/Production/Monitoring_Template)
-![](material/image_import_dashboard.png)
+<p align="center">
+  <img src="material/image_import_dashboard.png">
+</p>
 
 4. Enjoy
-![](material/image_dashboard.png)
+<p align="center">
+  <img src="material/image_dashboard.png">
+</p>
 
 ## Optimization
 
