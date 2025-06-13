@@ -1,0 +1,80 @@
+[0;32m✅ Found PDF file: random_machine_learing.pdf (5.0M)[0m
+[1;33mChecking Minikube status...[0m
+[1;33mSetting Docker environment for Minikube...[0m
+[1;33mCleaning up existing resources...[0m
+[1;33mApplying secrets...[0m
+[0;31m⚠️  Make sure you've updated secrets.yaml with your actual OpenAI API key![0m
+secret/openai-secret configured
+[1;33mCreating ConfigMap for multi-user configuration...[0m
+configmap/pdf-rag-config created
+[0;32m✅ ConfigMap created successfully[0m
+[1;33mBuilding Docker image with embedded PDF and Architecture Version 2...[0m
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.77kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10-slim
+#2 DONE 0.7s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [ 1/13] FROM docker.io/library/python:3.10-slim@sha256:034724ef64585eeb0e82385e9aabcbeabfe5f7cae2c2dcedb1da95114372b6d7
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 27.91kB 0.0s done
+#5 DONE 0.0s
+
+#6 [ 3/13] RUN apt-get update && apt-get install -y     gcc     g++     curl     util-linux     procps     && rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [ 5/13] RUN pip install --no-cache-dir -r requirements.txt
+#7 CACHED
+
+#8 [ 7/13] COPY Chatbot.py .
+#8 CACHED
+
+#9 [ 2/13] WORKDIR /app
+#9 CACHED
+
+#10 [ 6/13] COPY random_machine_learing.pdf /app/random_machine_learing.pdf
+#10 CACHED
+
+#11 [ 4/13] COPY requirements.txt .
+#11 CACHED
+
+#12 [ 8/13] COPY Langgraph_Agent.py .
+#12 CACHED
+
+#13 [ 9/13] COPY helper_functions.py .
+#13 DONE 0.1s
+
+#14 [10/13] COPY .env* ./
+#14 DONE 0.1s
+
+#15 [11/13] RUN mkdir -p /app/emissions_data /app/training_data     && chmod 755 /app/emissions_data /app/training_data
+#15 DONE 0.3s
+
+#16 [12/13] RUN touch /app/training_data.jsonl     && chmod 664 /app/training_data.jsonl
+#16 DONE 0.3s
+
+#17 [13/13] RUN useradd -m -u 1000 appuser     && chown -R appuser:appuser /app
+#17 DONE 0.6s
+
+#18 exporting to image
+#18 exporting layers
+#18 exporting layers 0.2s done
+#18 writing image sha256:01bde414705313ed9665d61174076e12dbff63429e7d7742acd751740efdd997 done
+#18 naming to docker.io/library/pdf-rag-app:latest 0.0s done
+#18 DONE 0.2s
+[0;32m✅ Docker image built successfully with Architecture Version 2[0m
+[1;33mApplying deployment with multi-user support...[0m
+deployment.apps/pdf-rag-app created
+persistentvolumeclaim/training-data-pvc created
+persistentvolumeclaim/shared-file-pvc created
+service/pdf-rag-service created
+[1;33mWaiting for deployment to be ready...[0m

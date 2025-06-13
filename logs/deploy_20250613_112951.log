@@ -1,0 +1,13 @@
+[0;32m✅ Found PDF file: random_machine_learing.pdf (5.0M)[0m
+[1;33mChecking Minikube status...[0m
+[1;33mSetting Docker environment for Minikube...[0m
+[1;33mCleaning up existing resources...[0m
+deployment.apps "pdf-rag-app" deleted
+service "pdf-rag-service" deleted
+configmap "pdf-rag-config" deleted
+persistentvolumeclaim "training-data-pvc" deleted
+persistentvolumeclaim "shared-file-pvc" deleted
+[1;33mApplying secrets...[0m
+[0;31m⚠️  Make sure you've updated secrets.yaml with your actual OpenAI API key![0m
+The request is invalid: patch: Invalid value: "map[data:map[api-key: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] metadata:map[annotations:map[kubectl.kubernetes.io/last-applied-configuration:{\"apiVersion\":\"v1\",\"data\":{\"api-key\":\"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\"},\"kind\":\"Secret\",\"metadata\":{\"annotations\":{},\"name\":\"openai-secret\",\"namespace\":\"default\"},\"type\":\"Opaque\"}\n]]]": error decoding from json: illegal base64 data at input byte 2
+[0;31m❌ Failed to apply secrets[0m

@@ -25,6 +25,11 @@ from prometheus_client import (
     generate_latest
 )
 
+import fcntl
+import uuid
+import streamlit as sl
+import os
+
 # Global variable to store metrics - will be initialized by get_or_create_metrics()
 _METRICS_INITIALIZED = False
 _METRICS = {}
@@ -126,23 +131,31 @@ class Logging:
     """Handles training data persistence for model improvement."""
 
     @staticmethod
+
     def save_training_data(query: str, response: str, satisfaction_score: float, context_adherence: float) -> None:
         """
-        Save query-response pairs with quality metrics for future training.
-        
-        Args:
-            query: User input query
-            response: System generated response
-            satisfaction_score: User satisfaction score (0-5)
-            context_adherence: Context adherence score (0-1)
+        Thread-safe training data saving with file locking and user identification.
         """
         try:
+            # Generate user ID if not exists
+            if 'user_id' not in sl.session_state:
+                sl.session_state.user_id = str(uuid.uuid4())[:8]
+            
+            user_id = sl.session_state.user_id
+            
+            # Get Pod information for Kubernetes environments
+            pod_name = os.environ.get('POD_NAME', 'local')
+            pod_ip = os.environ.get('POD_IP', 'localhost')
+            
             # Calculate composite quality score
             normalized_satisfaction = satisfaction_score / 5.0
             output_quality = (normalized_satisfaction + context_adherence) / 2
             
             training_entry = {
                 "timestamp": datetime.now().isoformat(),
+                "user_id": user_id,
+                "pod_name": pod_name,
+                "pod_ip": pod_ip,
                 "query": query,
                 "response": response,
                 "satisfaction_score": satisfaction_score,
@@ -150,11 +163,31 @@ class Logging:
                 "output_quality": output_quality
             }
             
-            with open("training_data.jsonl", 'a', encoding='utf-8') as f:
-                f.write(json.dumps(training_entry, ensure_ascii=False) + '\n')
-            
-            print(f"💾 Training data saved: Quality={output_quality:.3f} "
-                  f"(Satisfaction={satisfaction_score}/5, Adherence={context_adherence:.3f})")
+            # Thread-safe file writing with retries
+            max_retries = 5
+            for attempt in range(max_retries):
+                try:
+                    with open("training_data.jsonl", 'a', encoding='utf-8') as f:
+                        # Acquire exclusive lock (Unix systems)
+                        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                        
+                        # Write data
+                        f.write(json.dumps(training_entry, ensure_ascii=False) + '\n')
+                        f.flush()  # Ensure data is written to disk
+                        
+                        # Lock automatically released when file closes
+                        print(f"💾 Training data saved safely for user {user_id} on pod {pod_name}")
+                        return
+                        
+                except (IOError, OSError) as e:
+                    print(f"⚠️ File lock attempt {attempt + 1} failed: {e}")
+                    if attempt < max_retries - 1:
+                        # Exponential backoff: 0.1s, 0.2s, 0.4s, 0.8s, 1.6s
+                        time.sleep(0.1 * (2 ** attempt))
+                    else:
+                        print(f"❌ Failed to save training data after {max_retries} attempts")
+                        break
+                        
         except Exception as e:
             print(f"❌ Error saving training data: {e}")
 
@@ -274,9 +307,10 @@ class Monitoring:
             traceback.print_exc()
 
     @staticmethod
+
     def log_session_metrics_to_prometheus(session_data: dict) -> None:
         """
-        Log session-level aggregate metrics to Prometheus.
+        Log session-level aggregate metrics to Prometheus with user identification.
         
         Args:
             session_data: Dictionary containing session averages and statistics
@@ -285,9 +319,14 @@ class Monitoring:
             # Get metrics instance
             metrics = get_or_create_metrics()
             
-            print(f"🔄 Attempting to log {len(session_data)} session metrics...")
+            # Get user and pod identification
+            user_id = sl.session_state.get('user_id', 'anonymous')
+            pod_name = os.environ.get('POD_NAME', 'local')
+            pod_ip = os.environ.get('POD_IP', 'localhost')
             
-            # Update session-level gauge metrics
+            print(f"🔄 Attempting to log {len(session_data)} session metrics for user {user_id} on pod {pod_name}...")
+            
+            # Update session-level gauge metrics with user context
             metrics_updated = 0
             
             if 'tokens_query' in session_data:
@@ -297,7 +336,6 @@ class Monitoring:
             if 'context_adherence_query' in session_data:
                 metrics['CONTEXT_ADHERENCE_PER_QUERY'].set(session_data['context_adherence_query'])
                 metrics_updated += 1
-            
             
             if 'carbon_footprint' in session_data:
                 metrics['CARBON_FOOTPRINT'].set(session_data['carbon_footprint'])
@@ -332,10 +370,10 @@ class Monitoring:
                 metrics['LATENCY_PER_QUERY'].set(session_data['latency_query'])
                 metrics_updated += 1
 
-            print(f"📊 Session metrics logged to Prometheus: {metrics_updated}/{len(session_data)} metrics updated successfully")
+            print(f"📊 Session metrics logged to Prometheus: {metrics_updated}/{len(session_data)} metrics updated for user {user_id} on pod {pod_name}")
             
-            # Debug session data
-            print(f"🔍 Session data received: {list(session_data.keys())}")
+            # Log user context for debugging
+            print(f"🔍 User context: {user_id} | Pod: {pod_name} | IP: {pod_ip}")
             
         except Exception as e:
             print(f"❌ Error logging session metrics to Prometheus: {e}")

@@ -220,6 +220,17 @@ cp training_data.jsonl RLHF
 python RLHF.py
 ```
 
+If you executed your session with Minikube, you can extract the jsonl file with
+
+```bash
+# Append new lines from pod to existing local file
+kubectl exec $(kubectl get pods -l app=pdf-rag-app -o jsonpath='{.items[0].metadata.name}') -- cat /app/training_data.jsonl >> training_data_kubernetes.jsonl
+
+#OPTION 2, download the file
+#kubectl cp $(kubectl get pods -l app=pdf-rag-app -o jsonpath='{.items[0].metadata.name}'):/app/training_data.jsonl training_data_kubernetes.jsonl
+```
+
+
 ## Report
 
 To refer to our full production plans, as well as answers to relevant question about the implementation of this chatbot, please open the plannification file referenced. [open](https://github.com/juandavidvargas19/BMO_chatbot/tree/Production/material/BMO_RAG_Chatbot_Report.pdf)

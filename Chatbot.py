@@ -28,8 +28,33 @@ from helper_functions import Monitoring, Logging, Metrics, LatencyTracker, init_
 from Langgraph_Agent import initialize_llm_and_embeddings, create_vector_store, load_and_process_pdf, create_rag_agent
 from Langgraph_Agent import initialize_llm_and_embeddings_v2, create_rag_agent_v2, create_rag_agent_v3
 import argparse
+import uuid
 
 ########################  FUNCTIONS  #######################################
+
+@sl.cache_data
+def initialize_user_session():
+    """Initialize user session with unique identification."""
+    if 'user_id' not in sl.session_state:
+        sl.session_state.user_id = str(uuid.uuid4())[:8]
+        
+    if 'session_id' not in sl.session_state:
+        sl.session_state.session_id = str(uuid.uuid4())[:8]
+        
+    if 'session_start_time' not in sl.session_state:
+        sl.session_state.session_start_time = datetime.now()
+    
+    # Display user info in sidebar (useful for debugging multi-user scenarios)
+    pod_name = os.environ.get('POD_NAME', 'local')
+    pod_ip = os.environ.get('POD_IP', 'localhost')
+    
+    with sl.sidebar:
+        sl.markdown("### 🔍 Session Info")
+        sl.info(f"👤 User ID: {sl.session_state.user_id}")
+        sl.info(f"🏠 Pod: {pod_name}")
+        sl.info(f"🌐 Pod IP: {pod_ip}")
+        sl.info(f"⏰ Session: {sl.session_state.session_start_time.strftime('%H:%M:%S')}")
+
 
 @sl.cache_resource
 def initialize_monitoring():
@@ -119,7 +144,7 @@ Metrics.debug_metrics()
 
 
 def main():
-
+    initialize_user_session()
     parser = argparse.ArgumentParser()
     parser.add_argument("--architecture_version", "-v", type=int, choices=[1,2,3])
 

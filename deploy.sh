@@ -201,4 +201,10 @@ echo -e "${GREEN}===============================================================
 echo -e "${GREEN}🎉 Your services are running with Architecture Version $ARCHITECTURE_VERSION!${NC}"
 echo -e "${YELLOW}Architecture Version: $ARCHITECTURE_VERSION${NC}"
 
+echo -e "${GREEN}📊 Multi-User Features:${NC}"
+echo -e "${YELLOW}• Each user gets unique ID in sidebar${NC}"
+echo -e "${YELLOW}• File locking prevents data corruption${NC}"
+echo -e "${YELLOW}• Extract training data:${NC}"
+echo -e "${GREEN}  kubectl cp \$(kubectl get pods -l app=pdf-rag-app -o jsonpath='{.items[0].metadata.name}'):/app/training_data/training_data.jsonl ./training_data_kubernetes.jsonl${NC}"
+
 echo "Log file saved to: $LOG_FILE"
