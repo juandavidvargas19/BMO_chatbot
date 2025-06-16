@@ -14,7 +14,7 @@ This repository contains a prototype for a production-ready chatbot implementati
 The Chatbot combines state-of-the-art language models with agentic retrieval-augmented generation to provide accurate, contextual responses. The system is designed for production deployment with enterprise-grade monitoring and performance optimization capabilities. We use the design thinking methodology. Design thinking ensures we deeply understand user needs before building technical solutions, preventing the common trap of creating sophisticated AI systems that don't solve real workplace problems.
 
 <p align="center">
-  <img src="material/designthinking.jpg_">
+  <img src="material/designthinking.jpg">
 </p>
 
 ## EMPATHIZE & DEFINE
