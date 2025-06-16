@@ -400,7 +400,8 @@ def create_rag_agent_v3(_llm, _retriever, _llm_evaluator):
     - Only exceptional responses deserve 0.60+     
     - 0.85+ answers are 1 in a 100     
     - Common issues that reduce scores: vague language, missing examples, weak citations, incomplete answers      
-    
+    What is the bias-variance tradeoff in machine learning, and how does it impact model performance?
+
     User Query: {user_query}     
     Answer: {ai_response}      
     
