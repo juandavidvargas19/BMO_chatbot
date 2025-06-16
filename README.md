@@ -61,7 +61,7 @@ There are 3 prototype ideas. These are:
 ### Expected tradeOffs
 
 <p align="center">
-  <img src="material/tradeoffs_table.png>
+  <img src="material/tradeoffs_table.png">
 </p>
 
 ## PROTOTYPE
