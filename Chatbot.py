@@ -24,37 +24,13 @@ import re
 import json
 from datetime import datetime
 from IPython.display import display, Image
-from helper_functions import Monitoring, Logging, Metrics, LatencyTracker, init_metrics
+from helper_functions import Monitoring, Logging, Metrics, LatencyTracker, init_metrics, initialize_user_session
 from Langgraph_Agent import initialize_llm_and_embeddings, create_vector_store, load_and_process_pdf, create_rag_agent
 from Langgraph_Agent import initialize_llm_and_embeddings_v2, create_rag_agent_v2, create_rag_agent_v3
 import argparse
 import uuid
 
 ########################  FUNCTIONS  #######################################
-
-@sl.cache_data
-def initialize_user_session():
-    """Initialize user session with unique identification."""
-    if 'user_id' not in sl.session_state:
-        sl.session_state.user_id = str(uuid.uuid4())[:8]
-        
-    if 'session_id' not in sl.session_state:
-        sl.session_state.session_id = str(uuid.uuid4())[:8]
-        
-    if 'session_start_time' not in sl.session_state:
-        sl.session_state.session_start_time = datetime.now()
-    
-    # Display user info in sidebar (useful for debugging multi-user scenarios)
-    pod_name = os.environ.get('POD_NAME', 'local')
-    pod_ip = os.environ.get('POD_IP', 'localhost')
-    
-    with sl.sidebar:
-        sl.markdown("### 🔍 Session Info")
-        sl.info(f"👤 User ID: {sl.session_state.user_id}")
-        sl.info(f"🏠 Pod: {pod_name}")
-        sl.info(f"🌐 Pod IP: {pod_ip}")
-        sl.info(f"⏰ Session: {sl.session_state.session_start_time.strftime('%H:%M:%S')}")
-
 
 @sl.cache_resource
 def initialize_monitoring():
@@ -109,7 +85,6 @@ print("✅ PDF RAG metrics initialized!")
 monitor, CURRENT_SESSION_QUERIES, CURRENT_SESSION_AVG_SATISFACTION, CURRENT_SESSION_AVG_ADHERENCE = initialize_monitoring()
 
 # Import functions - direct references to static methods
-log_metrics_to_prometheus = Monitoring.log_metrics_to_prometheus
 log_session_metrics_to_prometheus = Monitoring.log_session_metrics_to_prometheus
 save_training_data = Logging.save_training_data
 calculate_context_adherence = Metrics.calculate_context_adherence
@@ -123,21 +98,6 @@ estimated_min_cost, _, _= calculate_cost( 30 , 150 )
 max_satisfaction_per_dollar = 5.0 / estimated_min_cost
 max_quality_per_dollar = 1.0 / estimated_min_cost
 price_per_kwh = 0.192 #average canada, reference: https://www.energyhub.org/electricity-prices/
-
-# Test metrics on startup
-print("🧪 Testing metrics initialization...")
-try:
-    # Run a simple test
-    from helper_functions import test_metrics
-    if test_metrics():
-        print("✅ Metrics system is working correctly!")
-    else:
-        print("⚠️ Metrics test failed - check configuration")
-except Exception as e:
-    print(f"⚠️ Could not test metrics: {e}")
-    import traceback
-    traceback.print_exc()
-
 
 # Call debug function
 Metrics.debug_metrics()
@@ -309,8 +269,7 @@ def main():
             'llm_evaluator_score': evaluation_score
         }
         
-        # Log to Prometheus
-        log_metrics_to_prometheus(sl.session_state.current_metrics)
+
         
         sl.write("**Answer:**")
         sl.write(response)
@@ -349,7 +308,6 @@ def main():
                     sl.session_state.score_submitted = True
                     
                     sl.session_state.satisfaction_score = satisfaction_score
-                    log_metrics_to_prometheus(sl.session_state.current_metrics, satisfaction_score)
 
                     save_training_data(
                         query=sl.session_state.current_metrics['query'],
@@ -445,7 +403,7 @@ def main():
         }
         
         # Send session metrics to Prometheus
-        log_session_metrics_to_prometheus(session_data)
+        log_session_metrics_to_prometheus(sl.session_state.current_metrics, session_data)
 
         # Display metrics sections (same as before, but now also sending to Prometheus)
         sl.write("---")

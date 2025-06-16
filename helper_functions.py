@@ -34,6 +34,30 @@ import os
 _METRICS_INITIALIZED = False
 _METRICS = {}
 
+
+def initialize_user_session():
+    """Initialize user session with unique identification."""
+    if 'user_id' not in sl.session_state:
+        sl.session_state.user_id = str(uuid.uuid4())[:8]
+        
+    if 'session_id' not in sl.session_state:
+        sl.session_state.session_id = str(uuid.uuid4())[:8]
+        
+    if 'session_start_time' not in sl.session_state:
+        sl.session_state.session_start_time = datetime.now()
+    
+    # Display user info in sidebar (useful for debugging multi-user scenarios)
+    pod_name = os.environ.get('POD_NAME', 'local')
+    pod_ip = os.environ.get('POD_IP', 'localhost')
+    
+    with sl.sidebar:
+        sl.markdown("### 🔍 Session Info")
+        sl.info(f"👤 User ID: {sl.session_state.user_id}")
+        sl.info(f"🏠 Pod: {pod_name}")
+        sl.info(f"🌐 Pod IP: {pod_ip}")
+        sl.info(f"⏰ Session: {sl.session_state.session_start_time.strftime('%H:%M:%S')}")
+
+
 def get_or_create_metrics():
     """Get or create Prometheus metrics (singleton pattern)."""
     global _METRICS_INITIALIZED, _METRICS
@@ -91,40 +115,12 @@ def get_or_create_metrics():
     return _METRICS
 
 
-def debug_prometheus_endpoint():
-    """Debug function to test Prometheus endpoint directly."""
-    try:
-        import requests
-        response = requests.get('http://localhost:8080/metrics', timeout=5)
-        print(f"📊 Prometheus endpoint status: {response.status_code}")
-        
-        if response.status_code == 200:
-            content = response.text
-            pdf_rag_lines = [line for line in content.split('\n') if 'pdf_rag' in line and not line.startswith('#')]
-            print(f"📊 Found {len(pdf_rag_lines)} PDF RAG metric lines")
-            
-            if pdf_rag_lines:
-                print("📊 Sample PDF RAG metrics:")
-                for line in pdf_rag_lines[:10]:  # Show first 10
-                    print(f"   {line}")
-                
-                # Count different metric types
-                counter_metrics = [line for line in pdf_rag_lines if 'total' in line]
-                histogram_metrics = [line for line in pdf_rag_lines if ('_bucket' in line or '_count' in line or '_sum' in line)]
-                gauge_metrics = [line for line in pdf_rag_lines if 'avg' in line or 'percentage' in line or 'per_dollar' in line]
-                
-                print(f"📊 Metric breakdown: {len(counter_metrics)} counters, {len(histogram_metrics)} histogram components, {len(gauge_metrics)} gauges")
-            else:
-                print("❌ No PDF RAG metrics found!")
-                
-        return response.status_code == 200 and len(pdf_rag_lines) > 0
-        
-    except ImportError:
-        print("⚠️ requests module not available for endpoint testing")
-        return None
-    except Exception as e:
-        print(f"❌ Error accessing Prometheus endpoint: {e}")
-        return False
+
+# Initialize metrics when module is imported (but after clearing if needed)
+def init_metrics():
+    """Initialize metrics - call this after clearing if needed."""
+    return get_or_create_metrics()
+
 
 
 class Logging:
@@ -262,53 +258,9 @@ class Monitoring:
         except Exception as e:
             print(f"❌ Unexpected error in metrics server: {e}")
 
-    @staticmethod
-    def log_metrics_to_prometheus(metrics_data: dict, satisfaction_score: float = None) -> None:
-        """
-        Log all metrics to Prometheus.
-        
-        Args:
-            metrics_data: Dictionary containing metrics (tokens, latency, cost, etc.)
-            satisfaction_score: Optional user satisfaction score
-        """
-        try:
-            # Get metrics instance - this will create them if they don't exist
-            metrics = get_or_create_metrics()
-            
-            # Verify metrics_data has required fields
-            required_fields = ['input_tokens', 'output_tokens', 'total_cost', 'total_latency', 'combined_adherence']
-            missing_fields = [field for field in required_fields if field not in metrics_data]
-            if missing_fields:
-                print(f"⚠️ Missing required fields in metrics_data: {missing_fields}")
-                return
-
-            # Update counters and histograms (individual query metrics)
-            metrics['QUERY_COUNTER'].inc()
-            metrics['TOKEN_USAGE'].labels(token_type='input').inc(metrics_data['input_tokens'])
-            metrics['TOKEN_USAGE'].labels(token_type='output').inc(metrics_data['output_tokens'])
-            metrics['COST_TOTAL'].inc(metrics_data['total_cost'])
-            
-            # Record histograms
-            metrics['QUERY_DURATION'].observe(metrics_data['total_latency'])
-            metrics['CONTEXT_ADHERENCE'].observe(metrics_data['combined_adherence'])
-            metrics['RETRIEVAL_TIME'].observe(metrics_data.get('retrieval_time', 0))
-            metrics['LLM_TIME'].observe(metrics_data.get('llm_time', 0))
-            
-          
-            
-            print(f"📊 Individual metrics logged to Prometheus: {metrics_data['input_tokens']} input tokens, "
-                  f"{metrics_data['output_tokens']} output tokens, {metrics_data['total_latency']:.3f}s latency")
-            
-        except Exception as e:
-            print(f"❌ Error logging individual metrics to Prometheus: {e}")
-            # Print the metrics_data for debugging
-            print(f"Debug - metrics_data: {metrics_data}")
-            import traceback
-            traceback.print_exc()
 
     @staticmethod
-
-    def log_session_metrics_to_prometheus(session_data: dict) -> None:
+    def log_session_metrics_to_prometheus(metrics_data: dict, session_data: dict) -> None:
         """
         Log session-level aggregate metrics to Prometheus with user identification.
         
@@ -324,53 +276,53 @@ class Monitoring:
             pod_name = os.environ.get('POD_NAME', 'local')
             pod_ip = os.environ.get('POD_IP', 'localhost')
             
-            print(f"🔄 Attempting to log {len(session_data)} session metrics for user {user_id} on pod {pod_name}...")
+            number_metrics= len(session_data) + len(metrics_data)
+            print(f"🔄 Attempting to log {number_metrics} session metrics for user {user_id} on pod {pod_name}...")
+
+            ################# BASE METRICS
+            # Update counters and histograms (individual query metrics)
+            metrics['QUERY_COUNTER'].inc()
+            metrics['TOKEN_USAGE'].labels(token_type='input').inc(metrics_data['input_tokens'])
+            metrics['TOKEN_USAGE'].labels(token_type='output').inc(metrics_data['output_tokens'])
+            metrics['COST_TOTAL'].inc(metrics_data['total_cost'])
             
-            # Update session-level gauge metrics with user context
-            metrics_updated = 0
+            # Record histograms
+            metrics['QUERY_DURATION'].observe(metrics_data['total_latency'])
+            metrics['CONTEXT_ADHERENCE'].observe(metrics_data['combined_adherence'])
+            metrics['RETRIEVAL_TIME'].observe(metrics_data.get('retrieval_time', 0))
+            metrics['LLM_TIME'].observe(metrics_data.get('llm_time', 0))
+            ####################
             
             if 'tokens_query' in session_data:
                 metrics['TOKENS_PER_QUERY'].set(session_data['tokens_query'])
-                metrics_updated += 1
             
             if 'context_adherence_query' in session_data:
                 metrics['CONTEXT_ADHERENCE_PER_QUERY'].set(session_data['context_adherence_query'])
-                metrics_updated += 1
             
             if 'carbon_footprint' in session_data:
                 metrics['CARBON_FOOTPRINT'].set(session_data['carbon_footprint'])
-                metrics_updated += 1
             
             if 'user_satisfaction' in session_data:
                 metrics['USER_SATISFACTION'].set(session_data['user_satisfaction'])
-                metrics_updated += 1
             
             if 'cost_per_query' in session_data:
                 metrics['COST_PER_QUERY'].set(session_data['cost_per_query'])
-                metrics_updated += 1
             
             if 'energy_per_query' in session_data:
                 metrics['ENERGY_PER_QUERY'].set(session_data['energy_per_query'])
-                metrics_updated += 1
             
             # Performance analysis metrics
             if 'satisfaction_per_dollar' in session_data:
                 metrics['SATISFACTION_PER_DOLLAR'].set(session_data['satisfaction_per_dollar'])
-                metrics_updated += 1
             
             if 'quality_per_dollar' in session_data:
                 metrics['QUALITY_PER_DOLLAR'].set(session_data['quality_per_dollar'])
-                metrics_updated += 1
 
             if 'llm_score' in session_data:
                 metrics['SCORE_LLM_EVALUATOR'].set(session_data['llm_score'])
-                metrics_updated += 1
             
             if 'latency_query' in session_data:
                 metrics['LATENCY_PER_QUERY'].set(session_data['latency_query'])
-                metrics_updated += 1
-
-            print(f"📊 Session metrics logged to Prometheus: {metrics_updated}/{len(session_data)} metrics updated for user {user_id} on pod {pod_name}")
             
             # Log user context for debugging
             print(f"🔍 User context: {user_id} | Pod: {pod_name} | IP: {pod_ip}")
@@ -400,7 +352,6 @@ class Metrics:
 
 
     @staticmethod
-
     def debug_metrics():
         """Debug function to check what metrics are registered."""
         from prometheus_client import REGISTRY
@@ -627,64 +578,3 @@ class LatencyTracker:
         except Exception as e:
             print(f"❌ Error getting total time: {e}")
             return 0.0
-
-
-# Test function to verify metrics are working
-def test_metrics():
-    """Test function to verify metrics are properly initialized."""
-    try:
-        test_data = {
-            'input_tokens': 10,
-            'output_tokens': 20,
-            'total_cost': 0.001,
-            'total_latency': 1.5,
-            'combined_adherence': 0.8,
-            'retrieval_time': 0.3,
-            'llm_time': 1.2
-        }
-        
-        print("🧪 Testing individual metrics logging...")
-        Monitoring.log_metrics_to_prometheus(test_data, 4)
-        
-        # Test session metrics
-        session_test_data = {
-            'avg_tokens_per_query': 15.0,
-            'avg_context_adherence': 0.8,
-            'avg_latency': 1.5,
-            'avg_carbon_per_query': 5.0,
-            'avg_user_satisfaction': 4.0,
-            'avg_cost_per_query': 0.001,
-            'avg_energy_per_query': 0.0001,
-            'satisfaction_per_dollar': 4000.0,
-            'quality_per_dollar': 800.0,
-            'excellent_answers_pct': 80.0,
-            'good_answers_pct': 20.0,
-            'poor_answers_pct': 0.0
-        }
-        
-        print("🧪 Testing session metrics logging...")
-        Monitoring.log_session_metrics_to_prometheus(session_test_data)
-        
-        print("✅ All metrics tests successful!")
-        return True
-    except Exception as e:
-        print(f"❌ Metrics test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-
-# Initialize metrics when module is imported (but after clearing if needed)
-def init_metrics():
-    """Initialize metrics - call this after clearing if needed."""
-    return get_or_create_metrics()
-
-
-if __name__ == "__main__":
-    # Run test when module is executed directly
-    print("🧪 Running comprehensive metrics test...")
-    test_metrics()
-    
-    # Test endpoint if possible
-    print("\n🔍 Testing Prometheus endpoint...")
-    debug_prometheus_endpoint()

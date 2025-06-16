@@ -6,14 +6,49 @@ This repository contains a prototype for a production-ready chatbot implementati
   <img src="material/image_chatbot.png">
 </p>
 
-## Author
+## AUTHOR
 - Juan David Vargas Mazuera (Université de Montréal, MILA - Quebec AI Institute, CHU Sainte-Justine Research Center)
 
-## Overview
+## METHODOLOGY
 
-The Chatbot combines state-of-the-art language models with agentic retrieval-augmented generation to provide accurate, contextual responses. The system is designed for production deployment with enterprise-grade monitoring and performance optimization capabilities. 
+The Chatbot combines state-of-the-art language models with agentic retrieval-augmented generation to provide accurate, contextual responses. The system is designed for production deployment with enterprise-grade monitoring and performance optimization capabilities. We use the design thinking methodology. Design thinking ensures we deeply understand user needs before building technical solutions, preventing the common trap of creating sophisticated AI systems that don't solve real workplace problems.
 
-### Key Features
+<p align="center">
+  <img src="material/designthinking.jpg_">
+</p>
+
+## EMPATHIZE & DEFINE
+
+We start the design of our RAG chatbot by outlining a design brief. A design brief aligns all stakeholders on project scope, constraints, and success metrics before development begins, preventing costly scope creep and ensuring the RAG chatbot meets actual business requirements rather than technical assumptions.
+
+<p align="center">
+  <img src="material/Design_Brief.png">
+</p>
+
+
+## IDEATE
+
+Based on the project goals, we ideate base prototypes that could solve the problem.
+
+### Versions
+
+There are 3 prototype ideas. These are:
+
+1. **Base model**: Agentic RAG (Version 1).
+<p align="center">
+  <img src="material/rag_agent_graph_v1.png">
+</p>
+
+2. **Base model + LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query. The evalautor can potentially be used for quality assesment and trigering a loop effect to ensure a quality response (Version 2).
+<p align="center">
+  <img src="material/rag_agent_graph_v2.png">
+</p>
+
+3. **Base model + LLM evaluator + context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3).
+
+
+### Features
+
 
 - **RAG Architecture**: Langgraph implementation of agentic retrieval-augmented generation  
 - **Containerized Deployment**: Docker and Kubernetes support for scalable deployment
@@ -23,9 +58,13 @@ The Chatbot combines state-of-the-art language models with agentic retrieval-aug
 - **LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
 - **Context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3)
 
+### Expected tradeOffs
 
+<p align="center">
+  <img src="material/tradeoffs_table.png>
+</p>
 
-## Basic Installation (Linux code provided)
+## PROTOTYPE
 
 ![](material/image_structure_code.png)
 
@@ -105,8 +144,6 @@ minikube service grafana-np #load grafana web interface using credentials
 # password = output from previous command
 ```
 
-## Deployment
-
 
 ### Clone the repository
 
@@ -132,21 +169,8 @@ chmod a+x setup.sh
 ./setup.sh
 ```
 
-For the deployment, there are 3 versions available that can be deployed depending on the specific needs of the client.
+For the deployment, there are 3 versions available that can be deployed depending on the specific needs of the client. To deploy each, you need to run the deployment script as in the example:
 
-These versions are:
-1. **Base model**: Agentic RAG (Version 1)
-<p align="center">
-  <img src="material/rag_agent_graph_v1.png">
-</p>
-2. **Base model + LLM evaluator**: Alternative deployment of model integrating an llm evaluator to score the relevancy of the response based on the query (Version 2)
-<p align="center">
-  <img src="material/rag_agent_graph_v2.png">
-</p>
-
-3. **Base model + LLM evaluator + context memory**: Alternative deployment of model integrating both an llm evaluator and temporal memory to remember previous interactions (Version 3)
-
-To deploy each, you need to run the deployment script as in the example:
 ```bash
 chmod a+x deploy.sh
 ./deploy.sh 1 #version 1
@@ -173,7 +197,7 @@ Click the "Ask Another Question" there after.
 </p>
 
 
-## Monitoring
+### Monitoring
 
 To succesfully set up your monitoring pipeline you need to follow 4 steps:
 
@@ -197,7 +221,7 @@ To succesfully set up your monitoring pipeline you need to follow 4 steps:
   <img src="material/image_dashboard.png">
 </p>
 
-## Optimization
+### Optimization
 
 To leverage the potential of agentic RAG, we implement a pipeline to finetune the main llm using reinforcement learning from human feedback. 
 
@@ -231,12 +255,55 @@ kubectl exec $(kubectl get pods -l app=pdf-rag-app -o jsonpath='{.items[0].metad
 ```
 
 
-## Report
+## TEST
+
+### Generic prompts
+
+We used 10 generic prompts (generated by chatgpt, questions 1-5, and claude, questions 6-10) as to test the performance metrics of the 3 versions implemented. The prompts are as follow:
+
+
+#### 1. **Conceptual Understanding**
+**Q:** *What is the bias-variance tradeoff in machine learning, and how does it impact model performance?*
+
+#### 2. **Practical Implementation**
+**Q:** *How would you implement early stopping in a PyTorch training loop, and why is it beneficial?*
+
+#### 3. **Recent Research**
+**Q:** *Summarize the main contributions of the "LoRA" technique for fine-tuning large language models.*
+
+####  4. **Comparison & Evaluation**
+**Q:** *Compare XGBoost and Random Forest in terms of performance, interpretability, and training time on tabular datasets.*
+
+#### 5. **Edge Cases & Recommendations**
+**Q:** *If a dataset contains severe class imbalance (e.g., 1% positive class), what are three strategies to improve classifier performance, and when would each be preferred?*
+
+####  6. **Conceptual Understanding + Application**
+**Q:** *What is the difference between bagging and boosting ensemble methods? Can you provide a specific example of when you would choose Random Forest over AdaBoost for a real-world problem?*
+
+####  7. **Technical Implementation + Best Practices**
+**Q:** *How do you handle class imbalance in a binary classification problem with a 95:5 ratio? Explain at least three different approaches and their trade-offs, including when to use each method.*
+
+####  8. **Mathematical Foundation + Intuition**
+**Q:** *Explain the mathematical intuition behind why gradient descent works for neural network optimization. What happens to the loss landscape when you add L2 regularization?*
+
+####  9. **Practical Troubleshooting + Debugging**
+**Q:** *My neural network is overfitting on the training data despite using dropout and early stopping. The validation loss starts increasing after epoch 10, but training loss keeps decreasing. What are the possible causes and solutions?*
+
+####  10. **Advanced Topics + Current Trends**
+**Q:** *Compare transformer attention mechanisms with CNN feature extraction for computer vision tasks. In what scenarios would you choose Vision Transformers (ViTs) over traditional CNNs, and what are the computational trade-offs?*
+
+### Evaluation table
+
+<p align="center">
+  <img src="material/Evaluation_table.png">
+</p>
+
+## REPORT
 
 To refer to our full production plans, as well as answers to relevant question about the implementation of this chatbot, please open the plannification file referenced. [open](https://github.com/juandavidvargas19/BMO_chatbot/tree/Production/material/BMO_RAG_Chatbot_Report.pdf)
 
 
-## Citation
+## CITATION
 
 If you want to use this code, please reach out to BMO capital markets.
 

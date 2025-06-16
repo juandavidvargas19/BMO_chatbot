@@ -440,7 +440,7 @@ def create_rag_agent_v3(_llm, _retriever, _llm_evaluator):
         if 'conversation_history' in state and state['conversation_history']:
             history_context = "\n\nPrevious conversation context (for reference):\n"
             # Just add the last 2 conversations for context
-            recent_conversations = state['conversation_history'][-2:]
+            recent_conversations = state['conversation_history'][-3:]
             for i, conv in enumerate(recent_conversations, 1):
                 history_context += f"Previous Q{i}: {conv['user_query']}\n"
                 history_context += f"Previous A{i}: {conv['assistant_response'][:300]}...\n\n"
