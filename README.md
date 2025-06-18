@@ -156,7 +156,7 @@ minikube service grafana-np #load grafana web interface using credentials
 ### Clone the repository
 
 ```bash
-git clone https://github.com/juandavidvargas19/BMO_chatbot.git -b Production
+git clone https://github.com/juandavidvargas19/BMO_chatbot.git -b Beta
 ```
 
 ### Set-up open-ai keys 
