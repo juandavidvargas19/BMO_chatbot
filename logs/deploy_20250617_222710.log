@@ -1,0 +1,9 @@
+[0;32m✅ Found PDF file: random_machine_learing.pdf (5.0M)[0m
+[1;33mChecking Minikube status...[0m
+[1;33mStarting Minikube...[0m
+* minikube v1.36.0 on Ubuntu 24.04
+* Using the docker driver based on existing profile
+! You cannot change the memory size for an existing minikube cluster. Please first delete the cluster.
+* Starting "minikube" primary control-plane node in "minikube" cluster
+* Pulling base image v0.0.47 ...
+* Restarting existing docker container for "minikube" ...

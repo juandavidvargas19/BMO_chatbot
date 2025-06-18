@@ -1,0 +1,98 @@
+[0;32m✅ Found PDF file: random_machine_learning.pdf (8.9M)[0m
+[1;33mChecking Minikube status...[0m
+[1;33mSetting Docker environment for Minikube...[0m
+[1;33mCleaning up existing resources...[0m
+deployment.apps "pdf-rag-app" deleted
+service "pdf-rag-service" deleted
+[1;33mApplying secrets...[0m
+[0;31m⚠️  Make sure you've updated secrets.yaml with your actual OpenAI API key![0m
+secret/openai-secret unchanged
+[1;33mBuilding Docker image with embedded PDF and Architecture Version 4...[0m
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.02kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10-slim
+#2 DONE 1.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [ 1/13] FROM docker.io/library/python:3.10-slim@sha256:034724ef64585eeb0e82385e9aabcbeabfe5f7cae2c2dcedb1da95114372b6d7
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 46.37kB done
+#5 DONE 0.0s
+
+#6 [10/13] COPY .env* ./
+#6 CACHED
+
+#7 [ 6/13] COPY random_machine_learning.pdf /app/random_machine_learning.pdf
+#7 CACHED
+
+#8 [ 5/13] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [ 2/13] WORKDIR /app
+#9 CACHED
+
+#10 [12/13] RUN touch /app/training_data.jsonl     && chmod 664 /app/training_data.jsonl
+#10 CACHED
+
+#11 [ 8/13] COPY Langgraph_Agent.py .
+#11 CACHED
+
+#12 [ 9/13] COPY helper_functions.py .
+#12 CACHED
+
+#13 [11/13] RUN mkdir -p /app/emissions_data /app/training_data /app/temp_uploads     && chmod 755 /app/emissions_data /app/training_data /app/temp_uploads
+#13 CACHED
+
+#14 [ 3/13] RUN apt-get update && apt-get install -y     gcc     g++     curl     util-linux     procps     && rm -rf /var/lib/apt/lists/*
+#14 CACHED
+
+#15 [ 4/13] COPY requirements.txt .
+#15 CACHED
+
+#16 [ 7/13] COPY Chatbot.py /app/Chatbot.py
+#16 CACHED
+
+#17 [13/13] RUN useradd -m -u 1000 appuser     && chown -R appuser:appuser /app
+#17 CACHED
+
+#18 exporting to image
+#18 exporting layers done
+#18 writing image sha256:89fbbee9f327239e25f9fc127270a392ef3ea411d26c1be42ca0fc0ea6a6a637 done
+#18 naming to docker.io/library/pdf-rag-app:latest 0.0s done
+#18 DONE 0.0s
+[0;32m✅ Docker image built successfully with Architecture Version 4[0m
+[1;33mApplying deployment...[0m
+deployment.apps/pdf-rag-app created
+service/pdf-rag-service created
+[1;33mWaiting for deployment to be ready...[0m
+deployment.apps/pdf-rag-app condition met
+[1;33mChecking pod status:[0m
+NAME                           READY   STATUS        RESTARTS   AGE
+pdf-rag-app-6989dc8469-2tgts   1/1     Terminating   0          2m46s
+pdf-rag-app-6989dc8469-mxvlx   1/1     Running       0          8s
+[0;32m✅ Deployment complete![0m
+[1;33mChecking service status:[0m
+[0;32mSERVICE                    READY   STATUS      AGE     ACCESS URL[0m
+[0;32m========================================================================[0m
+pdf-rag-app          1/1     Running    176s    http://192.168.49.2:32739
+http://192.168.49.2:32201
+prometheus           1/1     Running    1201509s http://192.168.49.2:31017
+grafana              1/1     Running    1201280s http://192.168.49.2:30447
+[0;32m========================================================================[0m
+[0;32m🎉 Your services are running with Architecture Version 4![0m
+[1;33mArchitecture Version: 4[0m
+[0;32m📊 Multi-User Features:[0m
+[1;33m• Each user gets unique ID in sidebar[0m
+[1;33m• File locking prevents data corruption[0m
+[1;33m• Extract training data:[0m
+[0;32m  kubectl cp $(kubectl get pods -l app=pdf-rag-app -o jsonpath='{.items[0].metadata.name}'):/app/training_data/training_data.jsonl ./training_data_kubernetes.jsonl[0m
+Log file saved to: logs/deploy_20250618_105722.log

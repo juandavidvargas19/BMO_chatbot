@@ -1,0 +1,81 @@
+[0;32m✅ Found PDF file: random_machine_learing.pdf (5.0M)[0m
+[1;33mChecking Minikube status...[0m
+[1;33mSetting Docker environment for Minikube...[0m
+[1;33mCleaning up existing resources...[0m
+[1;33mApplying secrets...[0m
+[0;31m⚠️  Make sure you've updated secrets.yaml with your actual OpenAI API key![0m
+secret/openai-secret unchanged
+[1;33mBuilding Docker image with embedded PDF and Architecture Version 3...[0m
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.02kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10-slim
+#2 DONE 0.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [ 1/13] FROM docker.io/library/python:3.10-slim@sha256:034724ef64585eeb0e82385e9aabcbeabfe5f7cae2c2dcedb1da95114372b6d7
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 28.88kB done
+#5 DONE 0.0s
+
+#6 [ 2/13] WORKDIR /app
+#6 CACHED
+
+#7 [ 3/13] RUN apt-get update && apt-get install -y     gcc     g++     curl     util-linux     procps     && rm -rf /var/lib/apt/lists/*
+#7 CACHED
+
+#8 [ 5/13] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [ 4/13] COPY requirements.txt .
+#9 CACHED
+
+#10 [ 6/13] COPY random_machine_learing.pdf /app/random_machine_learing.pdf
+#10 CACHED
+
+#11 [ 7/13] COPY Chatbot.py /app/Chatbot.py
+#11 DONE 0.1s
+
+#12 [ 8/13] COPY Langgraph_Agent.py .
+#12 DONE 0.1s
+
+#13 [ 9/13] COPY helper_functions.py .
+#13 DONE 0.1s
+
+#14 [10/13] COPY .env* ./
+#14 DONE 0.1s
+
+#15 [11/13] RUN mkdir -p /app/emissions_data /app/training_data /app/temp_uploads     && chmod 755 /app/emissions_data /app/training_data /app/temp_uploads
+#15 DONE 0.3s
+
+#16 [12/13] RUN touch /app/training_data.jsonl     && chmod 664 /app/training_data.jsonl
+#16 DONE 0.3s
+
+#17 [13/13] RUN useradd -m -u 1000 appuser     && chown -R appuser:appuser /app
+#17 DONE 0.5s
+
+#18 exporting to image
+#18 exporting layers
+#18 exporting layers 0.3s done
+#18 writing image sha256:441a125bccbf0911a5f3ec4036720bddcc9c0aec316e2772fd9adfc8fa5b1c7b done
+#18 naming to docker.io/library/pdf-rag-app:latest 0.0s done
+#18 DONE 0.3s
+[0;32m✅ Docker image built successfully with Architecture Version 3[0m
+[1;33mApplying deployment...[0m
+deployment.apps/pdf-rag-app-enhanced created
+service/pdf-rag-service-enhanced created
+[1;33mWaiting for deployment to be ready...[0m
+Error from server (NotFound): deployments.apps "pdf-rag-app" not found
+[1;33mChecking pod status:[0m
+No resources found in default namespace.
+[0;31m❌ Pod is not running. Status: [0m
+[1;33mPod logs:[0m
+No resources found in default namespace.
