@@ -544,7 +544,7 @@ def initialize_llm_and_embeddings():
     
     # Your fine-tuned model ID
     #finetuned_model_id = "ft:gpt-4o-2024-08-06:personal::Bew7X3c0"
-    finetuned_model_id = None
+    #finetuned_model_id = None
 
     # Default model fallback
     default_model = "gpt-4o"
@@ -601,8 +601,8 @@ def initialize_llm_and_embeddings_v2():
     """
     
     # Your fine-tuned model ID
-    #finetuned_model_id = "ft:gpt-4o-2024-08-06:personal::Bew7X3c0"
-    finetuned_model_id = None
+    finetuned_model_id = "ft:gpt-4o-2024-08-06:personal::Bew7X3c0"
+    #finetuned_model_id = None
     default_model = "gpt-4o"
     
     # Determine which model to use for main LLM
