@@ -314,7 +314,7 @@ To refer to our full production plans, as well as answers to relevant question a
 
 ## DEMO VIDEO
 
-Check a demo [here](https://youtu.be/ogxsstCcdrQ)
+Check a demo [here](https://www.youtube.com/watch?v=AsXHGLzgVdc)
 
 
 
